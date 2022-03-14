@@ -1,0 +1,543 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+  <head>
+    <title>Assignment 1</title>
+    <meta content="Microsoft FrontPage 6.0" name="GENERATOR">
+    <meta http-equiv="Content-Type" content="text/html;
+      charset=windows-1252">
+    <script src="https://unpkg.com/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://unpkg.com/three@0.126.1/build/three.min.js"></script>
+    <script>
+        (function() {
+
+            var camera, scene, renderer, spheres = [],
+                planes = {},
+                windowWidth = window.innerWidth - 100,
+                windowHeight = window.innerHeight - 100,
+                windowDepth = 1000,
+                maxwidth = windowWidth / 2,
+                maxheight = windowHeight / 2,
+                maxdepth = windowDepth / 2,
+                sphereRadius = 30,
+                planeStartTime = 400,
+                planeStartOpacity = 0.4,
+                animating = false;
+
+            var planeLocation = {
+                LEFT: 0,
+                RIGHT: 1,
+                TOP: 2,
+                BOTTOM: 3,
+                BACK: 4
+            };
+
+            function plane(mesh) {
+                this.mesh = mesh;
+                this.timeleft = planeStartTime;
+
+                this.reset = function() {
+                    this.timeleft = planeStartTime;
+                    this.mesh.material.opacity = planeStartOpacity;
+                }
+
+                this.updateMesh = function(elapsed) {
+                    // First check if there is still time left in the animation
+                    if (this.timeleft > 0)
+                        this.timeleft -= elapsed;
+
+                    // After potential subtraction of the elapsed time, check again
+                    if (this.timeleft > 0) {
+                        // Opacity is a linear function of the time that is left of the animation
+                        // opacity = originalOpacity * timeleft / starttime
+                        this.mesh.material.opacity = planeStartOpacity + (1.0 - planeStartOpacity) * (this.timeleft / planeStartTime);
+                    } else {
+                        this.mesh.material.opacity = planeStartOpacity;
+                    }
+                }
+            }
+
+            function sphere(mesh) {
+                this.mesh = mesh;
+                this.direction = [
+                    Math.round(Math.random()) == 1 ? 1 : -1,
+                    Math.round(Math.random()) == 1 ? 1 : -1
+                ];
+
+                this.speed = Math.random() * 200 + 400; // Pixels per millisecond
+
+                this.updatePosition = function(elapsed) {
+                    this.mesh.position.x += this.direction[0] * (elapsed / 1000.0 * this.speed);
+                    this.mesh.position.y += this.direction[1] * (elapsed / 1000.0 * this.speed);
+                }
+
+                this.updateCollision = function() {
+                    if (this.mesh.position.x >= (maxwidth - sphereRadius)) {
+                        hitPlane(planeLocation.RIGHT);
+                        this.direction[0] = -1;
+                    } else if (this.mesh.position.x <= -(maxwidth - sphereRadius)) {
+                        hitPlane(planeLocation.LEFT);
+                        this.direction[0] = 1;
+                    }
+
+                    if (this.mesh.position.y >= (maxheight - sphereRadius)) {
+                        hitPlane(planeLocation.TOP);
+                        this.direction[1] = -1;
+                    } else if (this.mesh.position.y <= -(maxheight - sphereRadius)) {
+                        hitPlane(planeLocation.BOTTOM);
+                        this.direction[1] = 1;
+                    }
+                }
+
+            }
+
+            function init() {
+
+                scene = new THREE.Scene();
+
+                camera = new THREE.PerspectiveCamera(75, windowWidth / windowHeight, 1, 10000);
+                camera.position.z = 1000;
+
+                // The light is at the upper right corner of the room.
+                var pointLight = new THREE.PointLight(0xffffff);
+                pointLight.position.x = maxwidth - 50;
+                pointLight.position.y = maxheight - 50;
+                scene.add(pointLight);
+
+                for (var i = 0; i < 1; i++) {
+                    var geometry = new THREE.SphereGeometry(sphereRadius, 10, 10);
+                    var material = new THREE.MeshLambertMaterial({
+                        color: 0xff0000
+                    });
+
+                    spheres[i] = new sphere(new THREE.Mesh(geometry, material));
+
+                    scene.add(spheres[i].mesh);
+                }
+
+                initPlanes();
+
+                renderer = new THREE.WebGLRenderer({
+                    alpha: true
+                });
+                renderer.setSize(windowWidth, windowHeight);
+
+                var renderarea = document.getElementById('render-area');
+                // Remove all existing nodes.
+                while (renderarea.firstChild) {
+                    renderarea.removeChild(renderarea.firstChild);
+                }
+                renderarea.appendChild(renderer.domElement);
+
+                lastTime = new Date();
+            }
+
+            function initPlanes() {
+                initPlane(planeLocation.TOP);
+                initPlane(planeLocation.BOTTOM);
+                initPlane(planeLocation.RIGHT);
+                initPlane(planeLocation.LEFT);
+            }
+
+            function initPlane(planeLoc) {
+                var w, h, posx = 0,
+                    posy = 0,
+                    rotx = 0,
+                    roty = 0;
+
+                switch (planeLoc) {
+                    case planeLocation.LEFT:
+                        w = windowDepth;
+                        h = windowHeight;
+                        posx = -maxwidth;
+                        roty = Math.PI / 2;
+                        break;
+                    case planeLocation.RIGHT:
+                        w = windowDepth;
+                        h = windowHeight;
+                        posx = maxwidth;
+                        roty = -Math.PI / 2;
+                        break;
+                    case planeLocation.BOTTOM:
+                        w = windowWidth;
+                        h = windowDepth;
+                        posy = -maxheight;
+                        rotx = -Math.PI / 2;
+                        break;
+                    case planeLocation.TOP:
+                        w = windowWidth;
+                        h = windowDepth;
+                        posy = maxheight;
+                        rotx = Math.PI / 2;
+                        break;
+                }
+
+                geometry = new THREE.PlaneGeometry(w, h);
+                material = new THREE.MeshLambertMaterial({
+                    color: 0x0000ff,
+                    opacity: planeStartOpacity,
+                    transparent: true
+                });
+                planeMesh = new THREE.Mesh(geometry, material);
+                planeMesh.position.x = posx;
+                planeMesh.position.y = posy;
+                planeMesh.rotation.x = rotx;
+                planeMesh.rotation.y = roty;
+
+                var thePlane = new plane(planeMesh);
+                planes[planeLoc] = thePlane;
+
+                scene.add(thePlane.mesh);
+            }
+
+            function hitPlane(planeLoc) {
+                planes[planeLoc].reset();
+            }
+
+            var lastTime = 0;
+
+            function animate() {
+                if (animating) {
+                    var now = new Date();
+                    var elapsed = now.getTime() - lastTime.getTime();
+                    lastTime = now;
+
+                    for (var i = 0; i < spheres.length; i++) {
+                        spheres[i].updateCollision();
+                        spheres[i].updatePosition(elapsed);
+                    }
+
+                    for (var i in planes) {
+                        planes[i].updateMesh(elapsed);
+                    }
+
+                    // note: three.js includes requestAnimationFrame shim
+                    window.animationId = requestAnimationFrame(animate);
+                    render();
+                }
+            }
+
+            function render() {
+                renderer.render(scene, camera);
+            }
+
+            var Demo = function() {};
+
+            Demo.prototype.start = function() {
+                if (window.animationId !== null)
+                    cancelAnimationFrame(window.animationId);
+                init();
+                animating = true;
+                animate();
+            }
+
+            Demo.prototype.stop = function() {
+                animating = false;
+            }
+
+            window.Demo = new Demo();
+
+        })();
+    </script>
+    <script>
+        window.animationId = null;
+
+        jQuery(document).ready(function() {
+            Demo.start();
+        });
+
+        function stopDemo() {
+            Demo.stop();
+        }
+    </script>
+  </head>
+  <body bgcolor="#ffffff">
+    <h3 style="font-family: Arial;">
+      <center>COMP 410/510, Computer Graphics, Spring 2022<br>
+      </center>
+    </h3>
+    <h3>
+      <center><b><font size="4" color="#000000"><br>
+          </font></b></center>
+    </h3>
+    <h3 style="font-family: Arial;"> <font color="#ff0000">Due Date:
+        Friday, March 18, 2022</font> </h3>
+    <h3 style="font-family: Arial;">Problem Description and Learning
+      Objectives:</h3>
+    <span style="font-family: Arial;"> In this assignment, you will
+      design and implement a basic graphics application that animates a
+      ball bouncing between four planes (left, right, up and down) of
+      the screen (as shown like the demo below, similar to a screen
+      saver). This will be an interactive program that allows the user
+      to select an object to draw (from a choice of two objects), to
+      choose various drawing attributes for the object (such as color
+      and polygon mode). Each time the user selects one of the drawing
+      options, the image on the screen will be redrawn with the new
+      choice. To develop this program you will need to learn how to use
+      both </span> <span style="font-weight: bold; font-family:
+      Arial;">shader-based OpenGL </span> <span style="font-family:
+      Arial;">and</span> <span style="font-weight: bold; font-family:
+      Arial;"> GLUT</span> <span style="font-family: Arial;"> (or
+      FreeGLUT) 3D graphics libraries. The GLUT library includes
+      functions for implementing event-driven input and display handling
+      operations. This assignment will be an introduction to
+      event-driven graphics programming. Your program must be developed
+      using </span> <span style="font-weight: bold; font-family:
+      Arial;">shader-based</span><span style="font-family: Arial;">
+      OpenGL and C/C++.</span><br>
+    <span style="font-family: Arial;"></span><br>
+    <h3 style="font-family: Arial;">Problem Specification</h3>
+    <p style="font-family: Arial;"> Your program will simulate and
+      display a bouncing ball (either cubical or spherical) in a given
+      3D box. The ball will initially be placed on the left-side of the
+      display window (i.e., the left side of the box) and then will
+      start movement in constant speed. The initial speed will be a
+      parameter to set. The ball will move rightwards until it hits the
+      bottom of the window, and bounce to the right-side of the display
+      window. Bouncing will continue as such. <strong>During execution,
+        the user may change the object type, color and drawing mode.</strong>
+    </p>
+    <p style="font-family: Arial;">Your program must handle user input
+      from keyboard and mouse.Object type should be toggled via mouse
+      click. You can assign a custom key press for the drawing mode
+      (wireframe or solid) and color.<br>
+    </p>
+    <ul style="font-family: Arial;">
+      <li><b>Object type </b>-- set the current object to be drawn, one
+        of the following two choices: &nbsp;&nbsp;
+        <ul>
+          <li>cube</li>
+          <li>sphere</li>
+        </ul>
+      </li>
+      <li><b>Drawing mode </b>--&nbsp; wireframe (i.e., as lines) or
+        solid mode &nbsp;&nbsp; &nbsp; </li>
+      <li><b>Color</b>-- set the current color in which to draw lines or
+        triangles (the 8 colors at the corners of the color cube plus
+        black will be sufficient) &nbsp;<b><br>
+        </b>&nbsp;&nbsp; &nbsp; &nbsp; </li>
+    </ul>
+    <span style="font-family: Arial;"> Object initialization,
+      termination and help functionalities should be controlled through
+      keyboard handler GLUT library functions as specified below:</span><br>
+    <ul style="font-family: Arial;">
+      <li><b>i</b> -- initialize the pose (top left corner of the
+        window)<br>
+      </li>
+      <li><span style="font-weight: bold;">h</span> -- help, print
+        explanation of your input&nbsp;commands&nbsp;(simply to command
+        line) </li>
+      <li><b>q </b>-- quit (exit) the program </li>
+    </ul>
+    <span style="font-family: Arial;"> Your program must also properly
+      handle the </span><b style="font-family: Arial;">reshape event</b><span
+      style="font-family: Arial;">; so you must define your own reshape
+      callback function.</span><br style="font-family: Arial;">
+    <br style="font-family: Arial;">
+    <span style="font-weight: bold; font-family: Arial;">
+      Transformations </span><span style="font-family: Arial;">(i.e,
+      vertex displacements, hence the movement)</span><span
+      style="font-weight: bold; font-family: Arial;"> </span><span
+      style="font-family: Arial;">and <span style="font-weight: bold;">projection</span>
+      have to be implemented in vertex shader. Since we haven't yet seen
+      how to shade surfaces, when you display your objects in solid
+      (filled polygon) mode, you'll be able to observe them only as
+      silhouettes.</span><br style="font-family: Arial;">
+    <br style="font-family: Arial;">
+    <span style="font-family: Arial;"> You can use the default <b>orthographic</b>
+      projection (the viewing volume being the cube centered at the
+      origin with sides of length 2). However in that case the side
+      walls of the box in which the ball bounces will not be visible.
+      For the side wall of the 3D box to be visible, you need to use <b>perspective</b>
+      projection (which is <b>not</b> mandatory). So implementing the
+      animation in orthographic projection (with no 3D box rendered) is
+      sufficient to get full credit from the homework. The latter will
+      however bring you some extra credit as explained below.<br>
+      <br>
+      Note also that since reshape callback function is invoked when the
+      window is first opened at the beginning of program execution, it
+      is a good place to put all projection-related settings (that means
+      you won't then need to set projection in init() function).<br>
+      <br>
+      Do </span><span style="font-weight: bold; font-family: Arial;">not</span><span
+      style="font-family: Arial;"> use any built-in GLUT functions to
+      create a cube or a sphere (see the implementation hints provided
+      below).<br>
+      <br>
+      <h3>A demo of the expected movement:</h3>
+      <div id="render-area"></div>
+      <span style="font-weight: bold;">Bonus#1 (+10pts):</span> Load and
+      display the 3D Bunny model from an OFF file as a third object type
+      (<a href="bunny.off">bunny.off)</a>. So in this case you will be
+      able to set the current object to draw, as one of the three
+      choices (cube, sphere or bunny). Note that you may initially need
+      to adjust the orientation and scale of the bunny model using a
+      transformation matrix.<br>
+      <br>
+      You can preview a given off file in 3D using the following web
+      link: (<a href="https://3dviewer.net/">https://3dviewer.net/</a>).
+      The off file in our case includes a vertex list first and then a
+      triangle list as shown below. Off files are actually ASCII files
+      and you can see their content using any text editor. But for your
+      application you need to write your own loader:<br>
+      <br>
+      OFF <br>
+      4922 9840 0<br>
+      1.7325 -9.534 24.02 <br>
+      1.7 -9.7711 23.8073 <br>
+      2.216 -9.723 23.6798 <br>
+      2.285 -9.5198 23.923 <br>
+      1.0534 -9.8046 23.8978<br>
+      ... <br>
+      ... <br>
+      3 0 1 2<br>
+      3 0 2 3<br>
+      3 4 1 0<br>
+      3 4 0 5<br>
+      3 6 1 4<br>
+      3 6 4 7<br>
+      ... <br>
+      <br>
+      Note that the first two numbers in the header indicate the number
+      of vertices and the number of triangles in the list, respectively
+      (the third number is the number of edges, which you can simply
+      ignore in this assignment). Then follows a list of x y z
+      coordinates, and then a list of indices. On each indices row,
+      first the number of vertices specifying that polygon is given,
+      which is always 3 in our case, followed by the three indices
+      themselves (hence each row represents a triangle of the model).<br>
+      <br style="font-family: Arial;">
+    </span> <span style="font-weight: bold;">Bonus#2 (+10pts):</span>
+    Implement a 3D movement where the ball can bounce to the back and
+    front planes. In this case, the ball should start its movement to
+    right-down-back direction. The user should be able to switch between
+    2D and 3D movements. Note that in this 3D motion case you will
+    definitely need to use <b>perspective</b> projection so that front
+    and back sides of the 3D box becomes visible and the movement makes
+    sense to the user.<br>
+    <h3 style="font-family: Arial;">Program Requirements</h3>
+    <ol style="font-family: Arial;">
+      <li>You are expected to design the program as an event-driven
+        application that responds to keyboard, mouse and reshape events.
+        Thus, you should follow the main program and function module
+        model given in your textbook and lecture notes. &nbsp; <br>
+      </li>
+      <li>Use shader-based OpenGL.<br>
+      </li>
+      <li>Your program files must have <font color="#330033">documentation
+
+
+
+          comments </font> <font color="#330033">.</font>
+        <p>Your program will be graded for: </p>
+        <ul>
+          <li> good programming<b> design</b>,</li>
+          <li>good programming<b> style</b>, </li>
+          <li>good program <b>documentation,</b> and<b>&nbsp;</b></li>
+          <li><b>correctness</b>.</li>
+        </ul>
+      </li>
+      <li>You may be required to run your program and demonstrate that
+        it works. </li>
+    </ol>
+    <p style="margin-top: 0px; margin-bottom: 3px; font-family: Arial;">You
+
+
+
+      are required to submit only the source files, i.e., the code
+      files, ready to be compiled and run. Please try to comply with the
+      announced due date. You will upload your submission to blackboard
+      under the Homework 1 assignment.</p>
+    <h3 style="font-family: Arial;">Implementation Hints</h3>
+    <ol style="font-family: Arial;">
+      <li>Detailed documentation for <b>OpenGL functions</b> are
+        described in your textbook<b> </b>and <a
+          href="https://www.opengl.org/sdk/docs/man/html/">OpenGL 4
+          Reference Pages</a>. I strongly recommend you to read Chapters
+        1 and 2 from your textbook (E. Angel).</li>
+      <li>Use the<b> GLUT (GL Utility Toolkit) library</b> functions as
+        described in your textbook. There is also a user manual at&nbsp;<a
+          href="http://freeglut.sourceforge.net/docs/api.php">http://freeglut.sourceforge.net/docs/api.php</a>.</li>
+      <li>Your program can be based on the example codes from your
+        textbook. You can directly use the given InitShader.cpp code to
+        load your shaders as well as the provided header files. You may
+        use the spinCube example from lectures as a skeleton code to
+        modify as well as the appendix example 7 from the textbook to
+        draw a sphere in terms of triangles (read also page 280 from the
+        textbook for description of the subdivision method to
+        approximate a sphere).</li>
+      <li>Note that the viewing volume (that you set by Ortho() function
+        defined in mat.h) is eventually fit into the display window. So
+        the bondaries of the window match the boundaries of the view
+        volume. If you use the default viewing settings, the
+        displacement of the ball should be along x and y axes.</li>
+      <li>To switch between different object types (cube or sphere or
+        bunny), you can use vertex arrays. A cube is easier to implement
+        so you can start with that. Note that you can also render
+        multiple objects at a time during animation.<br>
+      </li>
+      <li>You can use glPolygonMode() function to switch between
+        wireframe and solid types of object rendering.<br>
+      </li>
+      <li>You can use glutIdle() to get animation. With this function,
+        it is not possible to have direct control on the frame rate of
+        the animation. However you should be able to adjust it by
+        increasing or decreasing the initial speed of the ball and/or
+        the amount of stepwise displacements, so that you can try to
+        make it look as physically correct as possible. Another
+        possibility is to use glutTimer() function to have more control
+        on the speed of the animation, but that is not a must for this
+        assignment.</li>
+      <li>Adjust the size and the initial speed of the ball properly (by
+        playing with the state variables) so that animation looks nice.<br>
+      </li>
+      <li>You will need <b>global variables </b>that hold state values
+        for your program, e.g., a code number for the current object
+        type to draw, a code value for the current draw mode (wire frame
+        or solid), etc. The callback functions (glutIdle() for instance)
+        will simply update these global variables and post a redisplay.
+        The <b>display()</b> function will read the current state to
+        determine what object to draw, how to draw it, etc. Note, we are
+        forced to use global data even though that is not good software
+        design because of the way the GLUT library software designers
+        specified the input callback functions. &nbsp;&nbsp; </li>
+      <li>The various drawing mode control options listed above (type of
+        object, draw mode, color, etc.) should be handled by using these
+        GLUT lib functions:<br>
+        <ul>
+          <li>glutKeyboardFunc()</li>
+          <li>glutSpecialFunc()</li>
+          <li>glutReshapeFunc()</li>
+          <li>glutMouseFunc()</li>
+        </ul>
+        <p>Each of these functions must be called one time at program
+          initialization with a parameter that is the name of your
+          callback function. Your actual callback functions must have
+          the appropriate prototype. <br>
+          <br>
+          You are welcome to design your own user input technique for
+          setting these state variable values with some other
+          combination of key inputs or with mouse inputs (if you define
+          a mouse callback function and call <b>glutMouseFunction()</b>
+          or <b>glutMotionFunction()</b>).&nbsp;<br>
+        </p>
+      </li>
+      <li>Projection will be implemented in terms of matrix
+        multiplication operations in vertex shader. You can create the
+        corresponding 4x4 transformation matrices by using the functions
+        given in mat.h file. These matrices should be created in the
+        application and then sent to shader as uniform variables. For
+        example, you can make use of Ortho() function that returns a 4x4
+        orthographic projection matrix (the viewing volume is specified
+        through the function arguments); or Perspective() function that
+        returns a 4x4 perspective projection matrix. </li>
+      <li>Be creative and inventive!!! <b>Extra credit </b>will be
+        given for use of different OpenGL functions in creative ways and
+        for a clever design. Additionally you may want to add other
+        control options or design and implement a better user interface.
+      </li>
+    </ol>
+    <p style="font-family: Arial;"> </p>
+    <hr style="font-family: Arial;" align="left"><span
+      style="font-family: Arial;"> &nbsp; </span>
+  </body>
+</html>
