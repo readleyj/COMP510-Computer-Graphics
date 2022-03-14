@@ -1,18 +1,27 @@
-//
-//  Display a rotating cube, revisited
-//
-
 #include "Angel.h"
 
 typedef vec4 color4;
 typedef vec4 point4;
 
-const int NumVertices = 36; //(6 faces)(2 triangles/face)(3 vertices/triangle)
+const int NumVertices = 36;
 
 point4 points[NumVertices];
 color4 colors[NumVertices];
 
-// Vertices of a unit cube centered at origin, sides aligned with axes
+enum BALL_SHAPE
+{
+    SPHERE,
+    CUBE,
+    BUNNY,
+    NUM_SHAPES
+};
+
+enum DRAWING_MODE
+{
+    SOLID,
+    WIREFRAME
+};
+
 point4 vertices[8] = {
     point4(-0.5, -0.5, 0.5, 1.0),
     point4(-0.5, 0.5, 0.5, 1.0),
@@ -21,9 +30,9 @@ point4 vertices[8] = {
     point4(-0.5, -0.5, -0.5, 1.0),
     point4(-0.5, 0.5, -0.5, 1.0),
     point4(0.5, 0.5, -0.5, 1.0),
-    point4(0.5, -0.5, -0.5, 1.0)};
+    point4(0.5, -0.5, -0.5, 1.0),
+};
 
-// RGBA olors
 color4 vertex_colors[8] = {
     color4(0.0, 0.0, 0.0, 1.0), // black
     color4(1.0, 0.0, 0.0, 1.0), // red
@@ -35,16 +44,7 @@ color4 vertex_colors[8] = {
     color4(0.0, 1.0, 1.0, 1.0)  // cyan
 };
 
-// Array of rotation angles (in degrees) for each coordinate axis
-enum
-{
-    Xaxis = 0,
-    Yaxis = 1,
-    Zaxis = 2,
-    NumAxes = 3
-};
-int Axis = Xaxis;
-GLfloat Theta[NumAxes] = {0.0, 0.0, 0.0};
+GLuint vao[NUM_SHAPES];
 
 // Model-view and projection matrices uniform location
 GLuint ModelView, Projection;
@@ -101,9 +101,8 @@ void init()
     colorcube();
 
     // Create a vertex array object
-    GLuint vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    glGenVertexArrays(2, vao);
+    glBindVertexArray(vao[0]);
 
     // Create and initialize a buffer object
     GLuint buffer;
@@ -130,8 +129,8 @@ void init()
     Projection = glGetUniformLocation(program, "Projection");
 
     mat4 projection;
-    projection = Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0); // Ortho(): user-defined function in mat.h
-    // projection = Perspective( 45.0, 1.0, 0.5, 3.0 ); //try also perspective projection instead of ortho
+    // projection = Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0); // Ortho(): user-defined function in mat.h
+    projection = Perspective(45.0, 1.0, 0.5, 3.0); // try also perspective projection instead of ortho
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
     // Set current program object
@@ -150,12 +149,9 @@ void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //  Generate tha model-view matrix
+    //  Generate the model-view matrix
     const vec3 displacement(0.0, 0.0, 0.0);
-    mat4 model_view = (Translate(displacement) * Scale(1.0, 1.0, 1.0) *
-                       RotateX(Theta[Xaxis]) *
-                       RotateY(Theta[Yaxis]) *
-                       RotateZ(Theta[Zaxis]));
+    mat4 model_view = (Translate(displacement) * Scale(0.2, 0.2, 0.2));
 
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
 
@@ -190,13 +186,6 @@ void reshape(int w, int h)
 
 void idle(void)
 {
-    Theta[Axis] += 10.0;
-
-    if (Theta[Axis] > 360.0)
-    {
-        Theta[Axis] -= 360.0;
-    }
-
     glutPostRedisplay();
 }
 
@@ -216,15 +205,6 @@ void mouse(int button, int state, int x, int y)
     {
         switch (button)
         {
-        case GLUT_LEFT_BUTTON:
-            Axis = Xaxis;
-            break;
-        case GLUT_MIDDLE_BUTTON:
-            Axis = Yaxis;
-            break;
-        case GLUT_RIGHT_BUTTON:
-            Axis = Zaxis;
-            break;
         }
     }
 }
@@ -232,13 +212,7 @@ void mouse(int button, int state, int x, int y)
 //----------------------------------------------------------------------------
 void timer(int p)
 {
-    Theta[Axis] += 1.0;
-    if (Theta[Axis] > 360.0)
-    {
-        Theta[Axis] -= 360.0;
-    }
     glutPostRedisplay();
-
     glutTimerFunc(0.03, timer, 0);
 }
 
