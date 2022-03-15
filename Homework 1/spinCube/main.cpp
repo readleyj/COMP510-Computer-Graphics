@@ -4,6 +4,9 @@ typedef vec4 color4;
 typedef vec4 point4;
 
 const vec3 TOP_LEFT_CORNER = vec3(-0.7, 1.0, 0.0);
+const float SCALE_FACTOR = 0.20;
+const float BALL_RADIUS = SCALE_FACTOR;
+
 vec3 displacement = TOP_LEFT_CORNER;
 
 float HORIZONTAL_SPEED = 0.01;
@@ -38,14 +41,14 @@ namespace cubeContext
     color4 colors[NumVertices];
 
     point4 vertices[8] = {
-        point4(-0.5, -0.5, 0.5, 1.0),
-        point4(-0.5, 0.5, 0.5, 1.0),
-        point4(0.5, 0.5, 0.5, 1.0),
-        point4(0.5, -0.5, 0.5, 1.0),
-        point4(-0.5, -0.5, -0.5, 1.0),
-        point4(-0.5, 0.5, -0.5, 1.0),
-        point4(0.5, 0.5, -0.5, 1.0),
-        point4(0.5, -0.5, -0.5, 1.0),
+        point4(-1.0, -1.0, 1.0, 1.0),
+        point4(-1.0, 1.0, 1.0, 1.0),
+        point4(1.0, 1.0, 1.0, 1.0),
+        point4(1.0, -1.0, 1.0, 1.0),
+        point4(-1.0, -1.0, -1.0, 1.0),
+        point4(-1.0, 1.0, -1.0, 1.0),
+        point4(1.0, 1.0, -1.0, 1.0),
+        point4(1.0, -1.0, -1.0, 1.0),
     };
 
     // quad generates two triangles for each face and assigns colors
@@ -96,8 +99,8 @@ namespace sphereContext
 {
     GLuint buffer;
 
-    const int NumTimesToSubdivide = 3;
-    const int NumTriangles = 1024;
+    const int NumTimesToSubdivide = 4;
+    const int NumTriangles = 2048;
     const int NumVertices = 3 * NumTriangles;
 
     point4 points[NumVertices];
@@ -144,6 +147,7 @@ namespace sphereContext
             point4 v1 = unit(a + b);
             point4 v2 = unit(a + c);
             point4 v3 = unit(b + c);
+
             divide_triangle(a, v1, v2, count - 1);
             divide_triangle(c, v2, v3, count - 1);
             divide_triangle(b, v3, v1, count - 1);
@@ -264,7 +268,7 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //  Generate the model-view matrix
-    mat4 model_view = (Translate(displacement) * Scale(0.3, 0.3, 1.0));
+    mat4 model_view = (Translate(displacement) * Scale(SCALE_FACTOR, SCALE_FACTOR, 1.0));
 
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
 
@@ -312,9 +316,6 @@ void reshape(int w, int h)
         rightWallBoundary = 1.0 * (GLfloat)w / (GLfloat)h;
     }
 
-    printf("Bottom and top wall boundaries: %f %f\n", bottomWallBoundary, topWallBoundary);
-    printf("Left and right wall boundaries: %f %f\n", leftWallBoundary, rightWallBoundary);
-
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
     // reshape callback needs to be changed if perspective prohection is used
@@ -324,11 +325,28 @@ void reshape(int w, int h)
 
 void idle(void)
 {
-    if (displacement.x + HORIZONTAL_SPEED <= leftWallBoundary || displacement.x + HORIZONTAL_SPEED >= rightWallBoundary)
+    if (displacement.x + HORIZONTAL_SPEED <= leftWallBoundary + BALL_RADIUS)
+    {
+        displacement.x = leftWallBoundary + BALL_RADIUS;
         HORIZONTAL_SPEED = -HORIZONTAL_SPEED;
+    }
+    else if (displacement.x + HORIZONTAL_SPEED >= rightWallBoundary - BALL_RADIUS)
+    {
 
-    if (displacement.y + VERTICAL_SPEED <= bottomWallBoundary || displacement.y + VERTICAL_SPEED >= topWallBoundary)
+        displacement.x = rightWallBoundary - BALL_RADIUS;
+        HORIZONTAL_SPEED = -HORIZONTAL_SPEED;
+    }
+
+    if (displacement.y + VERTICAL_SPEED <= bottomWallBoundary + BALL_RADIUS)
+    {
+        displacement.y = bottomWallBoundary + BALL_RADIUS;
         VERTICAL_SPEED = -VERTICAL_SPEED;
+    }
+    else if (displacement.y + VERTICAL_SPEED >= topWallBoundary - BALL_RADIUS)
+    {
+        displacement.y = topWallBoundary - BALL_RADIUS;
+        VERTICAL_SPEED = -VERTICAL_SPEED;
+    }
 
     displacement += vec3(HORIZONTAL_SPEED, VERTICAL_SPEED, 0);
 
