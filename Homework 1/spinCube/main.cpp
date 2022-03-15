@@ -151,19 +151,20 @@ namespace sphereContext
     }
 }
 
-enum BALL_SHAPE
+enum BallShape
 {
     SPHERE,
     CUBE,
-    BUNNY,
     NUM_SHAPES
 };
 
-enum DRAWING_MODE
+enum DrawMode
 {
     SOLID,
     WIREFRAME
 };
+
+BallShape curBallShape = SPHERE;
 
 GLuint vao[NUM_SHAPES];
 
@@ -244,12 +245,19 @@ void display(void)
 
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
 
-    glBindVertexArray(vao[0]);
-    glDrawArrays(GL_TRIANGLES, 0, cubeContext::NumVertices);
+    switch (curBallShape)
+    {
+    case CUBE:
+        glBindVertexArray(vao[0]);
+        glDrawArrays(GL_TRIANGLES, 0, cubeContext::NumVertices);
+        break;
+    case SPHERE:
+        glBindVertexArray(vao[1]);
+        glDrawArrays(GL_TRIANGLES, 0, sphereContext::NumVertices);
+        break;
+    }
 
-    glBindVertexArray(vao[1]);
-    glDrawArrays(GL_TRIANGLES, 0, sphereContext::NumVertices);
-
+    glFlush();
     glutSwapBuffers();
 }
 
@@ -298,6 +306,9 @@ void mouse(int button, int state, int x, int y)
     {
         switch (button)
         {
+        case GLUT_LEFT_BUTTON:
+            curBallShape = BallShape((curBallShape + 1) % NUM_SHAPES);
+            break;
         }
     }
 }
