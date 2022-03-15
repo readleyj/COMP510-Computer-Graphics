@@ -3,6 +3,17 @@
 typedef vec4 color4;
 typedef vec4 point4;
 
+color4 VERTEX_COLORS[8] = {
+    color4(0.0, 0.0, 0.0, 1.0), // black
+    color4(1.0, 0.0, 0.0, 1.0), // red
+    color4(1.0, 1.0, 0.0, 1.0), // yellow
+    color4(0.0, 1.0, 0.0, 1.0), // green
+    color4(0.0, 0.0, 1.0, 1.0), // blue
+    color4(1.0, 0.0, 1.0, 1.0), // magenta
+    color4(1.0, 1.0, 1.0, 1.0), // white
+    color4(0.0, 1.0, 1.0, 1.0)  // cyan
+};
+
 namespace cubeContext
 {
     GLuint buffer;
@@ -23,17 +34,6 @@ namespace cubeContext
         point4(0.5, -0.5, -0.5, 1.0),
     };
 
-    color4 vertex_colors[8] = {
-        color4(0.0, 0.0, 0.0, 1.0), // black
-        color4(1.0, 0.0, 0.0, 1.0), // red
-        color4(1.0, 1.0, 0.0, 1.0), // yellow
-        color4(0.0, 1.0, 0.0, 1.0), // green
-        color4(0.0, 0.0, 1.0, 1.0), // blue
-        color4(1.0, 0.0, 1.0, 1.0), // magenta
-        color4(1.0, 1.0, 1.0, 1.0), // white
-        color4(0.0, 1.0, 1.0, 1.0)  // cyan
-    };
-
     // quad generates two triangles for each face and assigns colors
     //    to the vertices
 
@@ -41,27 +41,27 @@ namespace cubeContext
 
     void quad(int a, int b, int c, int d)
     {
-        colors[Index] = vertex_colors[a];
+        colors[Index] = VERTEX_COLORS[a];
         points[Index] = vertices[a];
         Index++;
 
-        colors[Index] = vertex_colors[b];
+        colors[Index] = VERTEX_COLORS[b];
         points[Index] = vertices[b];
         Index++;
 
-        colors[Index] = vertex_colors[c];
+        colors[Index] = VERTEX_COLORS[c];
         points[Index] = vertices[c];
         Index++;
 
-        colors[Index] = vertex_colors[a];
+        colors[Index] = VERTEX_COLORS[a];
         points[Index] = vertices[a];
         Index++;
 
-        colors[Index] = vertex_colors[c];
+        colors[Index] = VERTEX_COLORS[c];
         points[Index] = vertices[c];
         Index++;
 
-        colors[Index] = vertex_colors[d];
+        colors[Index] = VERTEX_COLORS[d];
         points[Index] = vertices[d];
         Index++;
     }
@@ -87,6 +87,7 @@ namespace sphereContext
     const int NumVertices = 3 * NumTriangles;
 
     point4 points[NumVertices];
+    color4 colors[NumVertices];
 
     int Index = 0;
 
@@ -94,12 +95,16 @@ namespace sphereContext
     {
 
         points[Index] = a;
+        colors[Index] = VERTEX_COLORS[Index % 8];
         Index++;
 
         points[Index] = b;
+        colors[Index] = VERTEX_COLORS[Index % 8];
+
         Index++;
 
         points[Index] = c;
+        colors[Index] = VERTEX_COLORS[Index % 8];
         Index++;
     }
 
@@ -215,13 +220,16 @@ void init()
     glBindVertexArray(vao[1]);
 
     glEnableVertexAttribArray(vPosition);
+    glEnableVertexAttribArray(vColor);
 
     glGenBuffers(1, &sphereContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::colors), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sphereContext::points), sphereContext::points);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::colors), sphereContext::colors);
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
 
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
