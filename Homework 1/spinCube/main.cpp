@@ -5,6 +5,8 @@ typedef vec4 point4;
 
 namespace cubeContext
 {
+    GLuint buffer;
+
     const int NumVertices = 36;
 
     point4 points[NumVertices];
@@ -78,6 +80,77 @@ namespace cubeContext
 
 namespace sphereContext
 {
+    GLuint buffer;
+
+    const int NumVertices = 36;
+
+    point4 points[NumVertices];
+    color4 colors[NumVertices];
+
+    point4 vertices[8] = {
+        point4(-0.5, -0.5, 0.5, 1.0),
+        point4(-0.5, 0.5, 0.5, 1.0),
+        point4(0.5, 0.5, 0.5, 1.0),
+        point4(0.5, -0.5, 0.5, 1.0),
+        point4(-0.5, -0.5, -0.5, 1.0),
+        point4(-0.5, 0.5, -0.5, 1.0),
+        point4(0.5, 0.5, -0.5, 1.0),
+        point4(0.5, -0.5, -0.5, 1.0),
+    };
+
+    color4 vertex_colors[8] = {
+        color4(0.0, 0.0, 0.0, 1.0), // black
+        color4(1.0, 0.0, 0.0, 1.0), // red
+        color4(1.0, 1.0, 0.0, 1.0), // yellow
+        color4(0.0, 1.0, 0.0, 1.0), // green
+        color4(0.0, 0.0, 1.0, 1.0), // blue
+        color4(1.0, 0.0, 1.0, 1.0), // magenta
+        color4(1.0, 1.0, 1.0, 1.0), // white
+        color4(0.0, 1.0, 1.0, 1.0)  // cyan
+    };
+
+    // quad generates two triangles for each face and assigns colors
+    //    to the vertices
+
+    int Index = 0;
+
+    void quad(int a, int b, int c, int d)
+    {
+        colors[Index] = vertex_colors[a];
+        points[Index] = vertices[a];
+        Index++;
+
+        colors[Index] = vertex_colors[b];
+        points[Index] = vertices[b];
+        Index++;
+
+        colors[Index] = vertex_colors[c];
+        points[Index] = vertices[c];
+        Index++;
+
+        colors[Index] = vertex_colors[a];
+        points[Index] = vertices[a];
+        Index++;
+
+        colors[Index] = vertex_colors[c];
+        points[Index] = vertices[c];
+        Index++;
+
+        colors[Index] = vertex_colors[d];
+        points[Index] = vertices[d];
+        Index++;
+    }
+
+    // generate 12 triangles: 36 vertices and 36 colors
+    void colorcube()
+    {
+        quad(1, 0, 3, 2);
+        quad(2, 3, 7, 6);
+        quad(3, 0, 4, 7);
+        quad(6, 5, 1, 2);
+        quad(4, 5, 6, 7);
+        quad(5, 4, 0, 1);
+    }
 }
 
 enum BALL_SHAPE
@@ -103,38 +176,52 @@ GLuint ModelView, Projection;
 void init()
 {
     cubeContext::colorcube();
-
-    // Create a vertex array object
-    glGenVertexArrays(2, vao);
-    glBindVertexArray(vao[0]);
-
-    // Create and initialize a buffer object
-    GLuint buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeContext::points) + sizeof(cubeContext::colors), NULL, GL_STATIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cubeContext::points), cubeContext::points);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeContext::points), sizeof(cubeContext::colors), cubeContext::colors);
+    sphereContext::colorcube();
 
     // Load shaders and use the resulting shader program
     GLuint program = InitShader("vshader.glsl", "fshader.glsl");
 
-    // set up vertex arrays
     GLuint vPosition = glGetAttribLocation(program, "vPosition");
-    glEnableVertexAttribArray(vPosition);
-    glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-
     GLuint vColor = glGetAttribLocation(program, "vColor");
-    glEnableVertexAttribArray(vColor);
-    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(cubeContext::points)));
 
     // Retrieve transformation uniform variable locations
     ModelView = glGetUniformLocation(program, "ModelView");
     Projection = glGetUniformLocation(program, "Projection");
 
     mat4 projection;
-    // projection = Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0); // Ortho(): user-defined function in mat.h
-    projection = Perspective(45.0, 1.0, 0.5, 3.0); // try also perspective projection instead of ortho
+    projection = Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0); // Ortho(): user-defined function in mat.h
+    // projection = Perspective(45.0, 1.0, 0.5, 3.0); // try also perspective projection instead of ortho
+
+    // Create a vertex array object
+    glGenVertexArrays(2, vao);
+    glBindVertexArray(vao[0]);
+
+    glEnableVertexAttribArray(vPosition);
+    glEnableVertexAttribArray(vColor);
+
+    // Create and initialize a buffer object
+    glGenBuffers(1, &cubeContext::buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeContext::points) + sizeof(cubeContext::colors), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cubeContext::points), cubeContext::points);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeContext::points), sizeof(cubeContext::colors), cubeContext::colors);
+
+    glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(cubeContext::points)));
+
+    glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
+
+    glBindVertexArray(vao[1]);
+
+    glEnableVertexAttribArray(vPosition);
+
+    glGenBuffers(1, &sphereContext::buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cubeContext::points), sphereContext::points);
+
+    glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
     // Set current program object
@@ -155,11 +242,15 @@ void display(void)
 
     //  Generate the model-view matrix
     const vec3 displacement(0.0, 0.0, 0.0);
-    mat4 model_view = (Translate(displacement) * Scale(0.2, 0.2, 0.2));
+    mat4 model_view = (Translate(displacement) * Scale(0.5, 0.5, 0.5));
 
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
 
+    glBindVertexArray(vao[0]);
     glDrawArrays(GL_TRIANGLES, 0, cubeContext::NumVertices);
+
+    glBindVertexArray(vao[1]);
+    glDrawArrays(GL_TRIANGLES, 0, sphereContext::NumVertices);
 
     glutSwapBuffers();
 }
