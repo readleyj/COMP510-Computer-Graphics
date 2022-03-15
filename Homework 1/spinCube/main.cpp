@@ -161,10 +161,12 @@ enum BallShape
 enum DrawMode
 {
     SOLID,
-    WIREFRAME
+    WIREFRAME,
+    NUM_DRAW_MODES
 };
 
 BallShape curBallShape = SPHERE;
+DrawMode curDrawMode = SOLID;
 
 GLuint vao[NUM_SHAPES];
 
@@ -294,8 +296,24 @@ void idle(void)
 
 void keyboard(unsigned char key, int x, int y)
 {
+    if (key == 'D' | key == 'd')
+    {
+        if (curDrawMode == SOLID)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+        else if (curDrawMode == WIREFRAME)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+
+        curDrawMode = DrawMode((curDrawMode + 1) % NUM_DRAW_MODES);
+    }
+
     if (key == 'Q' | key == 'q')
+    {
         exit(0);
+    }
 }
 
 //----------------------------------------------------------------------------
