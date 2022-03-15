@@ -82,74 +82,72 @@ namespace sphereContext
 {
     GLuint buffer;
 
-    const int NumVertices = 36;
+    const int NumTimesToSubdivide = 5;
+    const int NumTriangles = 4096;
+    const int NumVertices = 3 * NumTriangles;
 
     point4 points[NumVertices];
-    color4 colors[NumVertices];
-
-    point4 vertices[8] = {
-        point4(-0.5, -0.5, 0.5, 1.0),
-        point4(-0.5, 0.5, 0.5, 1.0),
-        point4(0.5, 0.5, 0.5, 1.0),
-        point4(0.5, -0.5, 0.5, 1.0),
-        point4(-0.5, -0.5, -0.5, 1.0),
-        point4(-0.5, 0.5, -0.5, 1.0),
-        point4(0.5, 0.5, -0.5, 1.0),
-        point4(0.5, -0.5, -0.5, 1.0),
-    };
-
-    color4 vertex_colors[8] = {
-        color4(0.0, 0.0, 0.0, 1.0), // black
-        color4(1.0, 0.0, 0.0, 1.0), // red
-        color4(1.0, 1.0, 0.0, 1.0), // yellow
-        color4(0.0, 1.0, 0.0, 1.0), // green
-        color4(0.0, 0.0, 1.0, 1.0), // blue
-        color4(1.0, 0.0, 1.0, 1.0), // magenta
-        color4(1.0, 1.0, 1.0, 1.0), // white
-        color4(0.0, 1.0, 1.0, 1.0)  // cyan
-    };
-
-    // quad generates two triangles for each face and assigns colors
-    //    to the vertices
 
     int Index = 0;
 
-    void quad(int a, int b, int c, int d)
+    void triangle(const point4 &a, const point4 &b, const point4 &c)
     {
-        colors[Index] = vertex_colors[a];
-        points[Index] = vertices[a];
+
+        points[Index] = a;
         Index++;
 
-        colors[Index] = vertex_colors[b];
-        points[Index] = vertices[b];
+        points[Index] = b;
         Index++;
 
-        colors[Index] = vertex_colors[c];
-        points[Index] = vertices[c];
-        Index++;
-
-        colors[Index] = vertex_colors[a];
-        points[Index] = vertices[a];
-        Index++;
-
-        colors[Index] = vertex_colors[c];
-        points[Index] = vertices[c];
-        Index++;
-
-        colors[Index] = vertex_colors[d];
-        points[Index] = vertices[d];
+        points[Index] = c;
         Index++;
     }
 
-    // generate 12 triangles: 36 vertices and 36 colors
-    void colorcube()
+    point4 unit(const point4 &p)
     {
-        quad(1, 0, 3, 2);
-        quad(2, 3, 7, 6);
-        quad(3, 0, 4, 7);
-        quad(6, 5, 1, 2);
-        quad(4, 5, 6, 7);
-        quad(5, 4, 0, 1);
+        float len = p.x * p.x + p.y * p.y + p.z * p.z;
+
+        point4 t;
+        if (len > DivideByZeroTolerance)
+        {
+            t = p / sqrt(len);
+            t.w = 1.0;
+        }
+
+        return t;
+    }
+
+    void divide_triangle(const point4 &a, const point4 &b,
+                         const point4 &c, int count)
+    {
+        if (count > 0)
+        {
+            point4 v1 = unit(a + b);
+            point4 v2 = unit(a + c);
+            point4 v3 = unit(b + c);
+            divide_triangle(a, v1, v2, count - 1);
+            divide_triangle(c, v2, v3, count - 1);
+            divide_triangle(b, v3, v1, count - 1);
+            divide_triangle(v1, v3, v2, count - 1);
+        }
+        else
+        {
+            triangle(a, b, c);
+        }
+    }
+
+    void tetrahedron(int count)
+    {
+        point4 v[4] = {
+            vec4(0.0, 0.0, 1.0, 1.0),
+            vec4(0.0, 0.942809, -0.333333, 1.0),
+            vec4(-0.816497, -0.471405, -0.333333, 1.0),
+            vec4(0.816497, -0.471405, -0.333333, 1.0)};
+
+        divide_triangle(v[0], v[1], v[2], count);
+        divide_triangle(v[3], v[2], v[1], count);
+        divide_triangle(v[0], v[3], v[1], count);
+        divide_triangle(v[0], v[2], v[3], count);
     }
 }
 
@@ -176,7 +174,7 @@ GLuint ModelView, Projection;
 void init()
 {
     cubeContext::colorcube();
-    sphereContext::colorcube();
+    sphereContext::tetrahedron(sphereContext::NumTimesToSubdivide);
 
     // Load shaders and use the resulting shader program
     GLuint program = InitShader("vshader.glsl", "fshader.glsl");
@@ -218,7 +216,7 @@ void init()
     glGenBuffers(1, &sphereContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), NULL, GL_STATIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cubeContext::points), sphereContext::points);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sphereContext::points), sphereContext::points);
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 
