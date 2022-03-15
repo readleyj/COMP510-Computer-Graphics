@@ -3,6 +3,15 @@
 typedef vec4 color4;
 typedef vec4 point4;
 
+const vec3 TOP_LEFT_CORNER = vec3(-0.7, 1.0, 0.0);
+vec3 displacement = TOP_LEFT_CORNER;
+
+float HORIZONTAL_SPEED = 0.01;
+float VERTICAL_SPEED = -0.01;
+
+int curWidth;
+int curHeight;
+
 color4 VERTEX_COLORS[8] = {
     color4(0.0, 0.0, 0.0, 1.0), // black
     color4(1.0, 0.0, 0.0, 1.0), // red
@@ -82,8 +91,8 @@ namespace sphereContext
 {
     GLuint buffer;
 
-    const int NumTimesToSubdivide = 5;
-    const int NumTriangles = 4096;
+    const int NumTimesToSubdivide = 3;
+    const int NumTriangles = 1024;
     const int NumVertices = 3 * NumTriangles;
 
     point4 points[NumVertices];
@@ -250,8 +259,7 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //  Generate the model-view matrix
-    const vec3 displacement(0.0, 0.0, 0.0);
-    mat4 model_view = (Translate(displacement) * Scale(0.5, 0.5, 0.5));
+    mat4 model_view = (Translate(displacement) * Scale(0.3, 0.3, 1.0));
 
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
 
@@ -297,6 +305,13 @@ void reshape(int w, int h)
 
 void idle(void)
 {
+    if (displacement.x + HORIZONTAL_SPEED <= -1.0 || displacement.x + HORIZONTAL_SPEED >= 1.0)
+        HORIZONTAL_SPEED = -HORIZONTAL_SPEED;
+
+    if (displacement.y + VERTICAL_SPEED <= -1.0 || displacement.y + VERTICAL_SPEED >= 1.0)
+        VERTICAL_SPEED = -VERTICAL_SPEED;
+
+    displacement += vec3(HORIZONTAL_SPEED, VERTICAL_SPEED, 0);
     glutPostRedisplay();
 }
 
@@ -340,19 +355,12 @@ void mouse(int button, int state, int x, int y)
 }
 
 //----------------------------------------------------------------------------
-void timer(int p)
-{
-    glutPostRedisplay();
-    glutTimerFunc(0.03, timer, 0);
-}
-
-//----------------------------------------------------------------------------
 
 int main(int argc, char **argv)
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-    glutInitWindowSize(512, 512);
+    glutInitWindowSize(1024, 1024);
     glutInitWindowPosition(50, 50);
     glutCreateWindow("Color Cube");
 
@@ -363,11 +371,9 @@ int main(int argc, char **argv)
 
     glutDisplayFunc(display); // set display callback function
     glutReshapeFunc(reshape);
-    // glutIdleFunc( idle );//can also use idle event for animation instaed of timer
+    glutIdleFunc(idle);
     glutMouseFunc(mouse);
     glutKeyboardFunc(keyboard);
-
-    glutTimerFunc(2, timer, 0);
 
     glutMainLoop();
     return 0;
