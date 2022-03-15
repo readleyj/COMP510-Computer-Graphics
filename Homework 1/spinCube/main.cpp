@@ -298,6 +298,8 @@ void keyboard(unsigned char key, int x, int y)
 {
     if (key == 'D' | key == 'd')
     {
+        curDrawMode = DrawMode((curDrawMode + 1) % NUM_DRAW_MODES);
+
         if (curDrawMode == SOLID)
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -306,8 +308,6 @@ void keyboard(unsigned char key, int x, int y)
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
-
-        curDrawMode = DrawMode((curDrawMode + 1) % NUM_DRAW_MODES);
     }
 
     if (key == 'Q' | key == 'q')
