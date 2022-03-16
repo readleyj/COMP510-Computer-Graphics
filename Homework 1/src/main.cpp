@@ -4,8 +4,8 @@ typedef vec4 color4;
 typedef vec4 point4;
 
 const vec3 TOP_LEFT_CORNER = vec3(-0.7, 1.0, 0.0);
-const float INITIAL_HORIZONTAL_SPEED = 0.02;
-const float INITIAL_VERTICAL_SPEED = -0.02;
+const float INITIAL_HORIZONTAL_SPEED = 0.01;
+const float INITIAL_VERTICAL_SPEED = -0.015;
 
 const float SCALE_FACTOR = 0.20;
 const float BALL_RADIUS = SCALE_FACTOR;
@@ -102,8 +102,8 @@ namespace sphereContext
 {
     GLuint buffer;
 
-    const int NumTimesToSubdivide = 4;
-    const int NumTriangles = 2048;
+    const int NumTimesToSubdivide = 5;
+    const int NumTriangles = 4096;
     const int NumVertices = 3 * NumTriangles;
 
     point4 points[NumVertices];
@@ -216,8 +216,7 @@ void init()
     Projection = glGetUniformLocation(program, "Projection");
 
     mat4 projection;
-    projection = Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0); // Ortho(): user-defined function in mat.h
-    // projection = Perspective(45.0, 1.0, 0.5, 3.0); // try also perspective projection instead of ortho
+    projection = Perspective(45.0, 1.0, 0.5, 3.0);
 
     // Create a vertex array object
     glGenVertexArrays(2, vao);
@@ -303,20 +302,22 @@ void reshape(int w, int h)
     // Set projection matrix
     mat4 projection;
 
+    GLfloat aspect = (GLfloat)w / (GLfloat)h;
+
     if (w <= h)
     {
-        projection = Ortho(-1.0, 1.0, -1.0 * (GLfloat)h / (GLfloat)w,
-                           1.0 * (GLfloat)h / (GLfloat)w, -1.0, 1.0);
+        projection = Ortho(-1.0, 1.0, -1.0 / aspect,
+                           1.0 / aspect, -1.0, 1.0);
 
-        bottomWallBoundary = -1.0 * (GLfloat)h / (GLfloat)w;
-        topWallBoundary = 1.0 * (GLfloat)h / (GLfloat)w;
+        bottomWallBoundary = -1.0 / aspect;
+        topWallBoundary = 1.0 / aspect;
     }
     else
     {
-        projection = Ortho(-1.0 * (GLfloat)w / (GLfloat)h, 1.0 * (GLfloat)w / (GLfloat)h, -1.0, 1.0, -1.0, 1.0);
+        projection = Ortho(-1.0 * aspect, 1.0 * aspect, -1.0, 1.0, -1.0, 1.0);
 
-        leftWallBoundary = -1.0 * (GLfloat)w / (GLfloat)h;
-        rightWallBoundary = 1.0 * (GLfloat)w / (GLfloat)h;
+        leftWallBoundary = -1.0 * aspect;
+        rightWallBoundary = 1.0 * aspect;
     }
 
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
