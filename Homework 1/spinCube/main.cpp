@@ -9,6 +9,11 @@ vec3 displacement = TOP_LEFT_CORNER;
 float HORIZONTAL_SPEED = 0.01;
 float VERTICAL_SPEED = -0.01;
 
+float leftWallBoundary = -1.0;
+float rightWallBoundary = 1.0;
+float bottomWallBoundary = -1.0;
+float topWallBoundary = 1.0;
+
 int curWidth;
 int curHeight;
 
@@ -290,11 +295,25 @@ void reshape(int w, int h)
 
     // Set projection matrix
     mat4 projection;
+
     if (w <= h)
+    {
         projection = Ortho(-1.0, 1.0, -1.0 * (GLfloat)h / (GLfloat)w,
                            1.0 * (GLfloat)h / (GLfloat)w, -1.0, 1.0);
+
+        bottomWallBoundary = -1.0 * (GLfloat)h / (GLfloat)w;
+        topWallBoundary = 1.0 * (GLfloat)h / (GLfloat)w;
+    }
     else
+    {
         projection = Ortho(-1.0 * (GLfloat)w / (GLfloat)h, 1.0 * (GLfloat)w / (GLfloat)h, -1.0, 1.0, -1.0, 1.0);
+
+        leftWallBoundary = -1.0 * (GLfloat)w / (GLfloat)h;
+        rightWallBoundary = 1.0 * (GLfloat)w / (GLfloat)h;
+    }
+
+    printf("Bottom and top wall boundaries: %f %f\n", bottomWallBoundary, topWallBoundary);
+    printf("Left and right wall boundaries: %f %f\n", leftWallBoundary, rightWallBoundary);
 
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
@@ -305,13 +324,14 @@ void reshape(int w, int h)
 
 void idle(void)
 {
-    if (displacement.x + HORIZONTAL_SPEED <= -1.0 || displacement.x + HORIZONTAL_SPEED >= 1.0)
+    if (displacement.x + HORIZONTAL_SPEED <= leftWallBoundary || displacement.x + HORIZONTAL_SPEED >= rightWallBoundary)
         HORIZONTAL_SPEED = -HORIZONTAL_SPEED;
 
-    if (displacement.y + VERTICAL_SPEED <= -1.0 || displacement.y + VERTICAL_SPEED >= 1.0)
+    if (displacement.y + VERTICAL_SPEED <= bottomWallBoundary || displacement.y + VERTICAL_SPEED >= topWallBoundary)
         VERTICAL_SPEED = -VERTICAL_SPEED;
 
     displacement += vec3(HORIZONTAL_SPEED, VERTICAL_SPEED, 0);
+
     glutPostRedisplay();
 }
 
