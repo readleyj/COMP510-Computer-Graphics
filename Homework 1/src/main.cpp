@@ -3,22 +3,29 @@
 typedef vec4 color4;
 typedef vec4 point4;
 
-const vec3 TOP_LEFT_CORNER = vec3(-0.7, 1.0, 0.0);
+const vec3 TOP_LEFT_CORNER = vec3(-0.7, 1.0, -2.0);
 const float INITIAL_HORIZONTAL_SPEED = 0.01;
 const float INITIAL_VERTICAL_SPEED = -0.015;
+const float INITIAL_Z_SPEED = -0.01;
 
 const float SCALE_FACTOR = 0.20;
 const float BALL_RADIUS = SCALE_FACTOR;
+const float FOV = 90.0;
+const float zNear = 0.5;
+const float zFar = 3.0;
 
 vec3 displacement = TOP_LEFT_CORNER;
 
 float curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
 float curVerticalSpeed = INITIAL_VERTICAL_SPEED;
+float curZSpeed = INITIAL_Z_SPEED;
 
 float leftWallBoundary = -1.0;
 float rightWallBoundary = 1.0;
 float bottomWallBoundary = -1.0;
 float topWallBoundary = 1.0;
+float backWallBoundary = -zFar;
+float frontWallBoundary = -zNear;
 
 int curWidth;
 int curHeight;
@@ -216,7 +223,7 @@ void init()
     Projection = glGetUniformLocation(program, "Projection");
 
     mat4 projection;
-    projection = Perspective(45.0, 1.0, 0.5, 3.0);
+    projection = Perspective(FOV, 1.0, zNear, zFar);
 
     // Create a vertex array object
     glGenVertexArrays(2, vao);
@@ -270,7 +277,7 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //  Generate the model-view matrix
-    mat4 model_view = (Translate(displacement) * Scale(SCALE_FACTOR, SCALE_FACTOR, 1.0));
+    mat4 model_view = (Translate(displacement) * Scale(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR));
 
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
 
@@ -306,19 +313,17 @@ void reshape(int w, int h)
 
     if (w <= h)
     {
-        projection = Ortho(-1.0, 1.0, -1.0 / aspect,
-                           1.0 / aspect, -1.0, 1.0);
-
         bottomWallBoundary = -1.0 / aspect;
         topWallBoundary = 1.0 / aspect;
     }
     else
     {
-        projection = Ortho(-1.0 * aspect, 1.0 * aspect, -1.0, 1.0, -1.0, 1.0);
 
         leftWallBoundary = -1.0 * aspect;
         rightWallBoundary = 1.0 * aspect;
     }
+
+    projection = Perspective(FOV, aspect, zNear, zFar);
 
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
@@ -352,7 +357,18 @@ void idle(void)
         curVerticalSpeed = -curVerticalSpeed;
     }
 
-    displacement += vec3(curHorizontalSpeed, curVerticalSpeed, 0);
+    if (displacement.z + curZSpeed <= backWallBoundary + BALL_RADIUS)
+    {
+        displacement.z = backWallBoundary + BALL_RADIUS;
+        curZSpeed = -curZSpeed;
+    }
+    else if (displacement.z + curZSpeed >= frontWallBoundary - BALL_RADIUS)
+    {
+        displacement.z = frontWallBoundary - BALL_RADIUS;
+        curZSpeed = -curZSpeed;
+    }
+
+    displacement += vec3(curHorizontalSpeed, curVerticalSpeed, curZSpeed);
 
     glutPostRedisplay();
 }
