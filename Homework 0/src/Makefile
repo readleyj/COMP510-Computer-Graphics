@@ -1,9 +1,9 @@
 LDLIBS = -lglut -lGLEW -lGL -lGLU
 
-CXXINCS = -I../include
+CXXINCS = -I../../include
 
-INIT_SHADER = ../Common/InitShader.cpp
-INIT_SHADER_OBJ = ../Common/InitShader.o
+INIT_SHADER = ../../Common/InitShader.cpp
+INIT_SHADER_OBJ = ../../Common/InitShader.o
 FILELIST = $(wildcard *.cpp)
 TARGETS = $(basename $(FILELIST))
 
