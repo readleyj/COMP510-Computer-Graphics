@@ -4,30 +4,30 @@ typedef vec4 color4;
 typedef vec4 point4;
 
 const vec3 TOP_LEFT_CORNER = vec3(-0.7, 1.0, -2.0);
-const float INITIAL_HORIZONTAL_SPEED = 0.01;
-const float INITIAL_VERTICAL_SPEED = -0.015;
-const float INITIAL_Z_SPEED = -0.01;
+const GLfloat INITIAL_HORIZONTAL_SPEED = 0.01;
+const GLfloat INITIAL_VERTICAL_SPEED = -0.015;
+const GLfloat INITIAL_Z_SPEED = -0.01;
 
-const float SCALE_FACTOR = 0.20;
-const float BALL_RADIUS = SCALE_FACTOR;
-const float FOV = 90.0;
-const float zNear = 0.5;
-const float zFar = 3.0;
+const GLfloat SCALE_FACTOR = 0.20;
+const GLfloat BALL_RADIUS = SCALE_FACTOR;
+const GLfloat FOV = 90.0;
+GLfloat zNear = 0.5;
+GLfloat zFar = 3.0;
 
 vec3 displacement = TOP_LEFT_CORNER;
 
-float curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
-float curVerticalSpeed = INITIAL_VERTICAL_SPEED;
-float curZSpeed = INITIAL_Z_SPEED;
+GLfloat curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
+GLfloat curVerticalSpeed = INITIAL_VERTICAL_SPEED;
+GLfloat curZSpeed = INITIAL_Z_SPEED;
 
 bool is3D = true;
 
-float leftWallBoundary = -1.0;
-float rightWallBoundary = 1.0;
-float bottomWallBoundary = -1.0;
-float topWallBoundary = 1.0;
-float backWallBoundary = -zFar;
-float frontWallBoundary = -zNear;
+GLfloat leftWallBoundary = -1.0;
+GLfloat rightWallBoundary = 1.0;
+GLfloat bottomWallBoundary = -1.0;
+GLfloat topWallBoundary = 1.0;
+GLfloat backWallBoundary = -zFar;
+GLfloat frontWallBoundary = -zNear;
 
 int curWidth;
 int curHeight;
@@ -280,8 +280,6 @@ void init()
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
 
-    glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
-
     // Set current program object
     glUseProgram(program);
 
@@ -335,11 +333,17 @@ void reshape(int w, int h)
 
     if (curWidth <= curHeight)
     {
+        leftWallBoundary = -1.0;
+        rightWallBoundary = 1.0;
+
         bottomWallBoundary = -1.0 / aspect;
         topWallBoundary = 1.0 / aspect;
     }
     else
     {
+        bottomWallBoundary = -1.0;
+        topWallBoundary = 1.0;
+
         leftWallBoundary = -1.0 * aspect;
         rightWallBoundary = 1.0 * aspect;
     }
