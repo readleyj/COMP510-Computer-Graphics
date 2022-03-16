@@ -4,13 +4,16 @@ typedef vec4 color4;
 typedef vec4 point4;
 
 const vec3 TOP_LEFT_CORNER = vec3(-0.7, 1.0, 0.0);
+const float INITIAL_HORIZONTAL_SPEED = 0.02;
+const float INITIAL_VERTICAL_SPEED = -0.02;
+
 const float SCALE_FACTOR = 0.20;
 const float BALL_RADIUS = SCALE_FACTOR;
 
 vec3 displacement = TOP_LEFT_CORNER;
 
-float HORIZONTAL_SPEED = 0.01;
-float VERTICAL_SPEED = -0.01;
+float curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
+float curVerticalSpeed = INITIAL_VERTICAL_SPEED;
 
 float leftWallBoundary = -1.0;
 float rightWallBoundary = 1.0;
@@ -325,30 +328,30 @@ void reshape(int w, int h)
 
 void idle(void)
 {
-    if (displacement.x + HORIZONTAL_SPEED <= leftWallBoundary + BALL_RADIUS)
+    if (displacement.x + curHorizontalSpeed <= leftWallBoundary + BALL_RADIUS)
     {
         displacement.x = leftWallBoundary + BALL_RADIUS;
-        HORIZONTAL_SPEED = -HORIZONTAL_SPEED;
+        curHorizontalSpeed = -curHorizontalSpeed;
     }
-    else if (displacement.x + HORIZONTAL_SPEED >= rightWallBoundary - BALL_RADIUS)
+    else if (displacement.x + curHorizontalSpeed >= rightWallBoundary - BALL_RADIUS)
     {
 
         displacement.x = rightWallBoundary - BALL_RADIUS;
-        HORIZONTAL_SPEED = -HORIZONTAL_SPEED;
+        curHorizontalSpeed = -curHorizontalSpeed;
     }
 
-    if (displacement.y + VERTICAL_SPEED <= bottomWallBoundary + BALL_RADIUS)
+    if (displacement.y + curVerticalSpeed <= bottomWallBoundary + BALL_RADIUS)
     {
         displacement.y = bottomWallBoundary + BALL_RADIUS;
-        VERTICAL_SPEED = -VERTICAL_SPEED;
+        curVerticalSpeed = -curVerticalSpeed;
     }
-    else if (displacement.y + VERTICAL_SPEED >= topWallBoundary - BALL_RADIUS)
+    else if (displacement.y + curVerticalSpeed >= topWallBoundary - BALL_RADIUS)
     {
         displacement.y = topWallBoundary - BALL_RADIUS;
-        VERTICAL_SPEED = -VERTICAL_SPEED;
+        curVerticalSpeed = -curVerticalSpeed;
     }
 
-    displacement += vec3(HORIZONTAL_SPEED, VERTICAL_SPEED, 0);
+    displacement += vec3(curHorizontalSpeed, curVerticalSpeed, 0);
 
     glutPostRedisplay();
 }
@@ -369,6 +372,13 @@ void keyboard(unsigned char key, int x, int y)
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
+    }
+
+    if (key == 'I' | key == 'i')
+    {
+        displacement = TOP_LEFT_CORNER;
+        curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
+        curVerticalSpeed = INITIAL_VERTICAL_SPEED;
     }
 
     if (key == 'Q' | key == 'q')
