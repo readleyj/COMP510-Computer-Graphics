@@ -331,6 +331,19 @@ void reshape(int w, int h)
     curWidth = w;
     curHeight = h;
 
+    GLfloat aspect = (GLfloat)curWidth / (GLfloat)curHeight;
+
+    if (curWidth <= curHeight)
+    {
+        bottomWallBoundary = -1.0 / aspect;
+        topWallBoundary = 1.0 / aspect;
+    }
+    else
+    {
+        leftWallBoundary = -1.0 * aspect;
+        rightWallBoundary = 1.0 * aspect;
+    }
+
     setProjectionMatrix();
 }
 
