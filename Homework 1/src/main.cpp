@@ -20,6 +20,8 @@ float curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
 float curVerticalSpeed = INITIAL_VERTICAL_SPEED;
 float curZSpeed = INITIAL_Z_SPEED;
 
+bool is3D = true;
+
 float leftWallBoundary = -1.0;
 float rightWallBoundary = 1.0;
 float bottomWallBoundary = -1.0;
@@ -206,6 +208,26 @@ GLuint vao[NUM_SHAPES];
 // Model-view and projection matrices uniform location
 GLuint ModelView, Projection;
 
+void setProjectionMatrix()
+{
+    mat4 projection;
+
+    GLfloat aspect = (GLfloat)curWidth / (GLfloat)curHeight;
+
+    if (is3D)
+    {
+        projection = Perspective(FOV, aspect, zNear, zFar);
+    }
+    else
+    {
+        projection = curWidth <= curHeight ? Ortho(-1.0, 1.0, -1.0 / aspect,
+                                                   1.0 / aspect, zNear, zFar)
+                                           : Ortho(-1.0 * aspect, 1.0 * aspect, -1.0, 1.0, zNear, zFar);
+    }
+
+    glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
+}
+
 // OpenGL initialization
 void init()
 {
@@ -306,28 +328,10 @@ void reshape(int w, int h)
 {
     glViewport(0, 0, w, h);
 
-    // Set projection matrix
-    mat4 projection;
+    curWidth = w;
+    curHeight = h;
 
-    GLfloat aspect = (GLfloat)w / (GLfloat)h;
-
-    if (w <= h)
-    {
-        bottomWallBoundary = -1.0 / aspect;
-        topWallBoundary = 1.0 / aspect;
-    }
-    else
-    {
-
-        leftWallBoundary = -1.0 * aspect;
-        rightWallBoundary = 1.0 * aspect;
-    }
-
-    projection = Perspective(FOV, aspect, zNear, zFar);
-
-    glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
-
-    // reshape callback needs to be changed if perspective prohection is used
+    setProjectionMatrix();
 }
 
 //----------------------------------------------------------------------------
@@ -357,15 +361,18 @@ void idle(void)
         curVerticalSpeed = -curVerticalSpeed;
     }
 
-    if (displacement.z + curZSpeed <= backWallBoundary + BALL_RADIUS)
+    if (is3D)
     {
-        displacement.z = backWallBoundary + BALL_RADIUS;
-        curZSpeed = -curZSpeed;
-    }
-    else if (displacement.z + curZSpeed >= frontWallBoundary - BALL_RADIUS)
-    {
-        displacement.z = frontWallBoundary - BALL_RADIUS;
-        curZSpeed = -curZSpeed;
+        if (displacement.z + curZSpeed <= backWallBoundary + BALL_RADIUS)
+        {
+            displacement.z = backWallBoundary + BALL_RADIUS;
+            curZSpeed = -curZSpeed;
+        }
+        else if (displacement.z + curZSpeed >= frontWallBoundary - BALL_RADIUS)
+        {
+            displacement.z = frontWallBoundary - BALL_RADIUS;
+            curZSpeed = -curZSpeed;
+        }
     }
 
     displacement += vec3(curHorizontalSpeed, curVerticalSpeed, curZSpeed);
@@ -396,6 +403,14 @@ void keyboard(unsigned char key, int x, int y)
         displacement = TOP_LEFT_CORNER;
         curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
         curVerticalSpeed = INITIAL_VERTICAL_SPEED;
+    }
+
+    if (key == 'V' | key == 'v')
+    {
+        is3D = !is3D;
+        curZSpeed = is3D ? INITIAL_Z_SPEED : 0;
+
+        setProjectionMatrix();
     }
 
     if (key == 'Q' | key == 'q')
