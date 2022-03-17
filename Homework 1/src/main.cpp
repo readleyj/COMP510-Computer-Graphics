@@ -530,6 +530,7 @@ void keyboard(unsigned char key, int x, int y)
         displacement = TOP_LEFT_CORNER;
         curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
         curVerticalSpeed = INITIAL_VERTICAL_SPEED;
+        curZSpeed = INITIAL_Z_SPEED;
     }
 
     if (key == 'V' | key == 'v')
