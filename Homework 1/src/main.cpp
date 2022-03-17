@@ -526,7 +526,7 @@ int main(int argc, char **argv)
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
     glutInitWindowSize(1024, 1024);
     glutInitWindowPosition(50, 50);
-    glutCreateWindow("Color Cube");
+    glutCreateWindow("Bouncing Ball");
 
     glewExperimental = GL_TRUE;
     glewInit();
