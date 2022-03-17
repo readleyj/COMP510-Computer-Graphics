@@ -43,6 +43,38 @@ color4 VERTEX_COLORS[8] = {
     color4(0.0, 1.0, 1.0, 1.0)  // cyan
 };
 
+enum BallShape
+{
+    SPHERE,
+    CUBE,
+    NUM_SHAPES
+};
+
+enum DrawMode
+{
+    SOLID,
+    WIREFRAME,
+    NUM_DRAW_MODES
+};
+
+enum DrawColor
+{
+    BLACK,
+    RED,
+    YELLOW,
+    GREEN,
+    BLUE,
+    MAGENTA,
+    WHITE,
+    CYAN,
+    COLORFUL,
+    NUM_DRAW_COLORS
+};
+
+BallShape curBallShape = SPHERE;
+DrawMode curDrawMode = SOLID;
+DrawColor curDrawColor = COLORFUL;
+
 namespace cubeContext
 {
     GLuint buffer;
@@ -70,27 +102,27 @@ namespace cubeContext
 
     void quad(int a, int b, int c, int d)
     {
-        colors[Index] = VERTEX_COLORS[a];
+        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[a];
         Index++;
 
-        colors[Index] = VERTEX_COLORS[b];
+        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[b];
         Index++;
 
-        colors[Index] = VERTEX_COLORS[c];
+        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[c];
         Index++;
 
-        colors[Index] = VERTEX_COLORS[a];
+        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[a];
         Index++;
 
-        colors[Index] = VERTEX_COLORS[c];
+        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[c];
         Index++;
 
-        colors[Index] = VERTEX_COLORS[d];
+        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[d];
         Index++;
     }
@@ -186,23 +218,6 @@ namespace sphereContext
     }
 }
 
-enum BallShape
-{
-    SPHERE,
-    CUBE,
-    NUM_SHAPES
-};
-
-enum DrawMode
-{
-    SOLID,
-    WIREFRAME,
-    NUM_DRAW_MODES
-};
-
-BallShape curBallShape = SPHERE;
-DrawMode curDrawMode = SOLID;
-
 GLuint vao[NUM_SHAPES];
 
 // Model-view and projection matrices uniform location
@@ -226,6 +241,20 @@ void setProjectionMatrix()
     }
 
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
+}
+
+void toggleColor(point4 colors[], int numVertices)
+{
+    curDrawColor = DrawColor((curDrawColor + 1) % NUM_DRAW_COLORS);
+
+    curDrawColor = curDrawColor == WHITE ? DrawColor((curDrawColor + 1) % NUM_DRAW_COLORS) : curDrawColor;
+
+    int colorIndex = static_cast<int>(curDrawColor);
+
+    for (int i = 0; i < numVertices; i++)
+    {
+        colors[i] = (curDrawColor == COLORFUL) ? VERTEX_COLORS[i % 8] : VERTEX_COLORS[colorIndex];
+    }
 }
 
 // OpenGL initialization
@@ -428,6 +457,22 @@ void keyboard(unsigned char key, int x, int y)
         curZSpeed = is3D ? INITIAL_Z_SPEED : 0;
 
         setProjectionMatrix();
+    }
+
+    if (key == 'C' | key == 'c')
+    {
+        switch (curBallShape)
+        {
+        case SPHERE:
+            toggleColor(sphereContext::colors, sphereContext::NumVertices);
+            glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::colors), sphereContext::colors);
+            break;
+
+        case CUBE:
+            toggleColor(cubeContext::colors, cubeContext::NumVertices);
+            glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeContext::points), sizeof(cubeContext::colors), cubeContext::colors);
+            break;
+        }
     }
 
     if (key == 'Q' | key == 'q')
