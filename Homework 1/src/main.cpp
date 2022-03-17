@@ -479,6 +479,7 @@ void keyboard(unsigned char key, int x, int y)
         printf("Press D => Toggle between solid and wireframe rendering\n");
         printf("Press C => Toggle between colors\n");
         printf("Press I => Reset ball to initial position\n");
+        printf("Press V => Toggle between 2D and 3D");
         printf("Press Q => Quit the program\n");
         printf("Left-mouse click => Toggle between ball shapes\n");
         printf("----------------------------------------------------------------------------\n");
