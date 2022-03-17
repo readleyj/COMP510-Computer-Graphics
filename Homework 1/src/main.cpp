@@ -45,8 +45,8 @@ color4 VERTEX_COLORS[8] = {
 
 enum BallShape
 {
-    SPHERE,
     CUBE,
+    SPHERE,
     NUM_SHAPES
 };
 
@@ -246,7 +246,6 @@ void setProjectionMatrix()
 void toggleColor(point4 colors[], int numVertices)
 {
     curDrawColor = DrawColor((curDrawColor + 1) % NUM_DRAW_COLORS);
-
     curDrawColor = curDrawColor == WHITE ? DrawColor((curDrawColor + 1) % NUM_DRAW_COLORS) : curDrawColor;
 
     int colorIndex = static_cast<int>(curDrawColor);
@@ -286,7 +285,7 @@ void init()
     // Create and initialize a buffer object
     glGenBuffers(1, &cubeContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeContext::points) + sizeof(cubeContext::colors), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeContext::points) + sizeof(cubeContext::colors), NULL, GL_DYNAMIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cubeContext::points), cubeContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeContext::points), sizeof(cubeContext::colors), cubeContext::colors);
 
@@ -302,7 +301,7 @@ void init()
 
     glGenBuffers(1, &sphereContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::colors), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::colors), NULL, GL_DYNAMIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sphereContext::points), sphereContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::colors), sphereContext::colors);
 
@@ -333,11 +332,9 @@ void display(void)
     switch (curBallShape)
     {
     case CUBE:
-        glBindVertexArray(vao[0]);
         glDrawArrays(GL_TRIANGLES, 0, cubeContext::NumVertices);
         break;
     case SPHERE:
-        glBindVertexArray(vao[1]);
         glDrawArrays(GL_TRIANGLES, 0, sphereContext::NumVertices);
         break;
     }
@@ -491,6 +488,18 @@ void mouse(int button, int state, int x, int y)
         {
         case GLUT_LEFT_BUTTON:
             curBallShape = BallShape((curBallShape + 1) % NUM_SHAPES);
+
+            if (curBallShape == CUBE)
+            {
+                glBindVertexArray(vao[0]);
+                glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
+            }
+            else if (curBallShape == SPHERE)
+            {
+                glBindVertexArray(vao[1]);
+                glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
+            }
+
             break;
         }
     }
