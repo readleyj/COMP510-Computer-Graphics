@@ -3,7 +3,7 @@
 typedef vec4 color4;
 typedef vec4 point4;
 
-const vec3 TOP_LEFT_CORNER = vec3(-0.7, 1.0, -2.0);
+const vec3 TOP_LEFT_FRONT_CORNER = vec3(-0.7, 1.0, -2.0);
 const GLfloat INITIAL_HORIZONTAL_SPEED = 0.01;
 const GLfloat INITIAL_VERTICAL_SPEED = -0.015;
 const GLfloat INITIAL_Z_SPEED = -0.01;
@@ -11,17 +11,19 @@ const GLfloat INITIAL_Z_SPEED = -0.01;
 const GLfloat SCALE_FACTOR = 0.20;
 const GLfloat BALL_RADIUS = SCALE_FACTOR;
 const GLfloat FOV = 90.0;
-GLfloat zNear = 0.5;
-GLfloat zFar = 5.0;
+const GLfloat zNear = 0.5;
+const GLfloat zFar = 5.0;
 
-vec3 displacement = TOP_LEFT_CORNER;
+vec3 displacement = TOP_LEFT_FRONT_CORNER;
 
 GLfloat curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
 GLfloat curVerticalSpeed = INITIAL_VERTICAL_SPEED;
 GLfloat curZSpeed = INITIAL_Z_SPEED;
 
+// Bool for toggling between
 bool is3D = true;
 
+// Boundaries for the room
 GLfloat leftWallBoundary = -1.0;
 GLfloat rightWallBoundary = 1.0;
 GLfloat bottomWallBoundary = -1.0;
@@ -75,6 +77,13 @@ BallShape curBallShape = SPHERE;
 DrawMode curDrawMode = SOLID;
 DrawColor curDrawColor = COLORFUL;
 
+// Allocate space for NUM_SHAPES VAOs and 1 more for the room / walls
+GLuint vao[NUM_SHAPES + 1];
+
+// Model-view and projection matrices uniform location
+GLuint ModelView, Projection;
+
+// Put object-specific data in namespaces
 namespace cubeContext
 {
     GLuint buffer;
@@ -94,9 +103,6 @@ namespace cubeContext
         point4(1.0, 1.0, -1.0, 1.0),
         point4(1.0, -1.0, -1.0, 1.0),
     };
-
-    // quad generates two triangles for each face and assigns colors
-    //    to the vertices
 
     int Index = 0;
 
@@ -143,6 +149,8 @@ namespace wallsContext
 {
     GLuint buffer;
 
+    // A room is implement as a cube with the front face missing
+    // Hence, there will be 36 - 6 = 30 vertices
     const int NumVertices = 30;
 
     point4 points[NumVertices];
@@ -179,6 +187,7 @@ namespace wallsContext
         Index++;
     }
 
+    // Room will be redrawn on reshape so need way to update vertices
     void update_vertices()
     {
         point4 new_vertices[8] = {
@@ -208,6 +217,7 @@ namespace wallsContext
         quad(4, 5, 6, 7);
         quad(5, 4, 0, 1);
 
+        // Reset Index since colorcube will be called multiple times (to redraw)
         Index = 0;
     }
 }
@@ -215,6 +225,8 @@ namespace wallsContext
 namespace sphereContext
 {
     GLuint buffer;
+
+    // Approximate a sphere using recursive subdivision
 
     const int NumTimesToSubdivide = 5;
     const int NumTriangles = 4096;
@@ -291,17 +303,16 @@ namespace sphereContext
     }
 }
 
-GLuint vao[NUM_SHAPES + 1];
-
-// Model-view and projection matrices uniform location
-GLuint ModelView, Projection;
-
+// For setting the projection matrix when toggling between 2D and 3D
 void setProjectionMatrix()
 {
     mat4 projection;
 
+    // Calculating the aspect ratio
     GLfloat aspect = (GLfloat)curWidth / (GLfloat)curHeight;
 
+    // Use perspective projection if 3D
+    // Orthographic if 2D
     if (is3D)
     {
         projection = Perspective(FOV, aspect, zNear, zFar);
@@ -318,11 +329,16 @@ void setProjectionMatrix()
 
 void toggleColor(point4 colors[], int numVertices)
 {
+    // Advance enum to next color
     curDrawColor = DrawColor((curDrawColor + 1) % NUM_DRAW_COLORS);
+
+    // Skip white since white won't be seen (since the background is also white)
     curDrawColor = curDrawColor == WHITE ? DrawColor((curDrawColor + 1) % NUM_DRAW_COLORS) : curDrawColor;
 
+    // Get index from enum (to index into color array)
     int colorIndex = static_cast<int>(curDrawColor);
 
+    // Set color values
     for (int i = 0; i < numVertices; i++)
     {
         colors[i] = (curDrawColor == COLORFUL) ? VERTEX_COLORS[i % 8] : VERTEX_COLORS[colorIndex];
@@ -388,7 +404,7 @@ void init()
 
     glGenBuffers(1, &wallsContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, wallsContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(wallsContext::points) + sizeof(wallsContext::colors), NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(wallsContext::points) + sizeof(wallsContext::colors), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(wallsContext::points), wallsContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(wallsContext::points), sizeof(wallsContext::colors), wallsContext::colors);
 
@@ -411,14 +427,18 @@ void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Render the walls first, then the objects
+    // Translate back a bit so that scene is visible
+    // Scaling should only apply to objects (so (1.0, 1.0, 1.0) is used for the scale matrix)
     mat4 model_view = Translate(vec3(0.0, 0.0, -2.0)) * Scale(1.0, 1.0, 1.0);
 
+    // Draw room
     glBindVertexArray(vao[2]);
     glBindBuffer(GL_ARRAY_BUFFER, wallsContext::buffer);
-
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
     glDrawArrays(GL_TRIANGLES, 0, wallsContext::NumVertices);
 
+    // Use different matrices for objects other than the room
     model_view = (Translate(displacement) * Scale(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR));
 
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
@@ -453,8 +473,10 @@ void reshape(int w, int h)
     curWidth = w;
     curHeight = h;
 
+    // Calculate aspect ratio
     GLfloat aspect = (GLfloat)curWidth / (GLfloat)curHeight;
 
+    // Update wall boundaries depending on width and height
     if (curWidth <= curHeight)
     {
         leftWallBoundary = -1.0;
@@ -472,12 +494,15 @@ void reshape(int w, int h)
         rightWallBoundary = 1.0 * aspect;
     }
 
+    // Need to update wall vertices on reshape since room will be scaled
     wallsContext::colorcube();
 
+    // Bind wall buffer send updated vertex data
     glBindVertexArray(vao[2]);
     glBindBuffer(GL_ARRAY_BUFFER, wallsContext::buffer);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(wallsContext::points), wallsContext::points);
 
+    // Projection matrix may need to be updated
     setProjectionMatrix();
 }
 
@@ -485,6 +510,7 @@ void reshape(int w, int h)
 
 void idle(void)
 {
+    // Ball should bounce off boundaries
     if (displacement.x + curHorizontalSpeed <= leftWallBoundary + BALL_RADIUS)
     {
         displacement.x = leftWallBoundary + BALL_RADIUS;
@@ -508,6 +534,7 @@ void idle(void)
         curVerticalSpeed = -curVerticalSpeed;
     }
 
+    // Make ball bounce off front / back walls only if 3D is toggled
     if (is3D)
     {
         if (displacement.z + curZSpeed <= backWallBoundary + BALL_RADIUS)
@@ -531,6 +558,7 @@ void idle(void)
 
 void keyboard(unsigned char key, int x, int y)
 {
+    // Toggle draw mode (SOLID or WIREFRAME)
     if (key == 'D' | key == 'd')
     {
         curDrawMode = DrawMode((curDrawMode + 1) % NUM_DRAW_MODES);
@@ -545,14 +573,17 @@ void keyboard(unsigned char key, int x, int y)
         }
     }
 
+    // Reset ball to initial position
+    // Reset ball speed
     if (key == 'I' | key == 'i')
     {
-        displacement = TOP_LEFT_CORNER;
+        displacement = TOP_LEFT_FRONT_CORNER;
         curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
         curVerticalSpeed = INITIAL_VERTICAL_SPEED;
         curZSpeed = INITIAL_Z_SPEED;
     }
 
+    // Toggle between 2D and 3D
     if (key == 'V' | key == 'v')
     {
         is3D = !is3D;
@@ -561,6 +592,7 @@ void keyboard(unsigned char key, int x, int y)
         setProjectionMatrix();
     }
 
+    // Toggle between colors
     if (key == 'C' | key == 'c')
     {
         switch (curBallShape)
@@ -577,6 +609,7 @@ void keyboard(unsigned char key, int x, int y)
         }
     }
 
+    // Print input command overview
     if (key == 'H' | key == 'h')
     {
         printf("----------------------------------------------------------------------------\n");
@@ -590,6 +623,7 @@ void keyboard(unsigned char key, int x, int y)
         printf("----------------------------------------------------------------------------\n");
     }
 
+    // Quit the program
     if (key == 'Q' | key == 'q')
     {
         exit(0);
@@ -600,6 +634,7 @@ void keyboard(unsigned char key, int x, int y)
 
 void mouse(int button, int state, int x, int y)
 {
+    // Toggle betwene shapes on left-mouse click
     if (state == GLUT_DOWN)
     {
         switch (button)
