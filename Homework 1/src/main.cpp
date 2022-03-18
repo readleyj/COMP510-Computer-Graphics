@@ -12,7 +12,7 @@ const GLfloat SCALE_FACTOR = 0.20;
 const GLfloat BALL_RADIUS = SCALE_FACTOR;
 const GLfloat FOV = 90.0;
 GLfloat zNear = 0.5;
-GLfloat zFar = 3.0;
+GLfloat zFar = 5.0;
 
 vec3 displacement = TOP_LEFT_CORNER;
 
@@ -26,7 +26,7 @@ GLfloat leftWallBoundary = -1.0;
 GLfloat rightWallBoundary = 1.0;
 GLfloat bottomWallBoundary = -1.0;
 GLfloat topWallBoundary = 1.0;
-GLfloat backWallBoundary = -zFar;
+GLfloat backWallBoundary = -3.0;
 GLfloat frontWallBoundary = -zNear;
 
 int curWidth;
