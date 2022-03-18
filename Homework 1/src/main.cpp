@@ -148,16 +148,7 @@ namespace wallsContext
     point4 points[NumVertices];
     color4 colors[NumVertices];
 
-    point4 vertices[8] = {
-        point4(-1.0, -1.0, 1.0, 1.0),
-        point4(-1.0, 1.0, 1.0, 1.0),
-        point4(1.0, 1.0, 1.0, 1.0),
-        point4(1.0, -1.0, 1.0, 1.0),
-        point4(-1.0, -1.0, -1.0, 1.0),
-        point4(-1.0, 1.0, -1.0, 1.0),
-        point4(1.0, 1.0, -1.0, 1.0),
-        point4(1.0, -1.0, -1.0, 1.0),
-    };
+    point4 vertices[8];
 
     int Index = 0;
 
@@ -188,13 +179,36 @@ namespace wallsContext
         Index++;
     }
 
+    void update_vertices()
+    {
+        point4 new_vertices[8] = {
+            point4(leftWallBoundary, bottomWallBoundary, 1.0, 1.0),
+            point4(leftWallBoundary, topWallBoundary, 1.0, 1.0),
+            point4(rightWallBoundary, topWallBoundary, 1.0, 1.0),
+            point4(rightWallBoundary, bottomWallBoundary, 1.0, 1.0),
+            point4(leftWallBoundary, bottomWallBoundary, -1.0, 1.0),
+            point4(leftWallBoundary, topWallBoundary, -1.0, 1.0),
+            point4(rightWallBoundary, topWallBoundary, -1.0, 1.0),
+            point4(rightWallBoundary, bottomWallBoundary, -1.0, 1.0),
+        };
+
+        for (int i = 0; i < 8; i++)
+        {
+            vertices[i] = new_vertices[i];
+        }
+    }
+
     void colorcube()
     {
+        update_vertices();
+
         quad(2, 3, 7, 6);
         quad(3, 0, 4, 7);
         quad(6, 5, 1, 2);
         quad(4, 5, 6, 7);
         quad(5, 4, 0, 1);
+
+        Index = 0;
     }
 }
 
@@ -374,7 +388,7 @@ void init()
 
     glGenBuffers(1, &wallsContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, wallsContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(wallsContext::points) + sizeof(wallsContext::colors), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(wallsContext::points) + sizeof(wallsContext::colors), NULL, GL_DYNAMIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(wallsContext::points), wallsContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(wallsContext::points), sizeof(wallsContext::colors), wallsContext::colors);
 
@@ -457,6 +471,12 @@ void reshape(int w, int h)
         leftWallBoundary = -1.0 * aspect;
         rightWallBoundary = 1.0 * aspect;
     }
+
+    wallsContext::colorcube();
+
+    glBindVertexArray(vao[2]);
+    glBindBuffer(GL_ARRAY_BUFFER, wallsContext::buffer);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(wallsContext::points), wallsContext::points);
 
     setProjectionMatrix();
 }
