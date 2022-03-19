@@ -1,5 +1,10 @@
 #include "Angel.h"
 
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+
 typedef vec4 color4;
 typedef vec4 point4;
 
@@ -13,6 +18,8 @@ const GLfloat BALL_RADIUS = SCALE_FACTOR;
 const GLfloat FOV = 90.0;
 const GLfloat zNear = 0.5;
 const GLfloat zFar = 5.0;
+
+const GLfloat BUNNY_X_ROTATION_ANGLE = -90.0;
 
 vec3 displacement = TOP_LEFT_FRONT_CORNER;
 
@@ -49,6 +56,7 @@ enum BallShape
 {
     CUBE,
     SPHERE,
+    BUNNY,
     NUM_SHAPES
 };
 
@@ -82,6 +90,8 @@ GLuint vao[NUM_SHAPES + 1];
 
 // Model-view and projection matrices uniform location
 GLuint ModelView, Projection;
+
+void loadModel(std::string path, std::vector<point4> *points);
 
 // Put object-specific data in namespaces
 namespace cubeContext
@@ -303,6 +313,95 @@ namespace sphereContext
     }
 }
 
+namespace bunnyContext
+{
+    GLuint buffer;
+
+    int NumVertices;
+
+    std::vector<point4> points;
+    std::vector<color4> colors;
+
+    std::string modelPath = "bunny.off";
+
+    void initBunny()
+    {
+        loadModel("bunny.off", &points);
+
+        NumVertices = points.size();
+        colors.resize(NumVertices);
+
+        for (int colorIdx = 0; colorIdx < NumVertices; colorIdx++)
+        {
+            colors[colorIdx] = VERTEX_COLORS[colorIdx % 8];
+        }
+    }
+}
+
+void loadModel(std::string path, std::vector<point4> *points)
+{
+    std::string line;
+    std::ifstream modelFile(path);
+
+    int numVertices, numTriangles, numEdges;
+
+    if (modelFile.is_open())
+    {
+        // Skip header
+        std::string header;
+        std::getline(modelFile, header);
+
+        // Parse model info
+        modelFile >> numVertices >> numTriangles >> numEdges;
+
+        std::vector<point4> baseVertices(numVertices, point4(0.0, 0.0, 0.0, 1.0));
+
+        point4 maxCoord = point4(std::numeric_limits<float>::min());
+        point4 minCoord = point4(std::numeric_limits<float>::max());
+
+        float xRange, yRange, zRange;
+
+        for (int vertexIdx = 0; vertexIdx < numVertices; vertexIdx++)
+        {
+            modelFile >> baseVertices[vertexIdx].x >> baseVertices[vertexIdx].y >> baseVertices[vertexIdx].z;
+
+            maxCoord.x = std::max(maxCoord.x, baseVertices[vertexIdx].x);
+            maxCoord.y = std::max(maxCoord.y, baseVertices[vertexIdx].y);
+            maxCoord.z = std::max(maxCoord.z, baseVertices[vertexIdx].z);
+
+            minCoord.x = std::min(minCoord.x, baseVertices[vertexIdx].x);
+            minCoord.y = std::min(minCoord.y, baseVertices[vertexIdx].y);
+            minCoord.z = std::min(minCoord.z, baseVertices[vertexIdx].z);
+        }
+
+        xRange = maxCoord.x - minCoord.x;
+        yRange = maxCoord.y - minCoord.y;
+        zRange = maxCoord.z - minCoord.z;
+
+        for (int vertexIdx = 0; vertexIdx < numVertices; vertexIdx++)
+        {
+            float scaledX = 2.0f * (baseVertices[vertexIdx].x - minCoord.x) / xRange - 1.0f;
+            float scaledY = 2.0f * (baseVertices[vertexIdx].y - minCoord.y) / yRange - 1.0f;
+            float scaledZ = 2.0f * (baseVertices[vertexIdx].z - minCoord.z) / zRange - 1.0f;
+
+            baseVertices[vertexIdx].x = scaledX;
+            baseVertices[vertexIdx].y = scaledY;
+            baseVertices[vertexIdx].z = scaledZ;
+        }
+
+        int numFaces, vertIdxX, vertIdxY, vertIdxZ;
+
+        for (int triangleIdx = 0; triangleIdx < numTriangles; triangleIdx++)
+        {
+            modelFile >> numFaces >> vertIdxX >> vertIdxY >> vertIdxZ;
+
+            points->emplace_back(baseVertices[vertIdxX]);
+            points->emplace_back(baseVertices[vertIdxY]);
+            points->emplace_back(baseVertices[vertIdxZ]);
+        }
+    }
+}
+
 // For setting the projection matrix when toggling between 2D and 3D
 void setProjectionMatrix()
 {
@@ -349,8 +448,9 @@ void toggleColor(point4 colors[], int numVertices)
 void init()
 {
     cubeContext::colorcube();
-    wallsContext::colorcube();
     sphereContext::tetrahedron(sphereContext::NumTimesToSubdivide);
+    bunnyContext::initBunny();
+    wallsContext::colorcube();
 
     // Load shaders and use the resulting shader program
     GLuint program = InitShader("vshader.glsl", "fshader.glsl");
@@ -402,6 +502,20 @@ void init()
     glEnableVertexAttribArray(vPosition);
     glEnableVertexAttribArray(vColor);
 
+    glGenBuffers(1, &bunnyContext::buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, bunnyContext::buffer);
+    glBufferData(GL_ARRAY_BUFFER, bunnyContext::points.size() * sizeof(point4) + bunnyContext::colors.size() * sizeof(point4), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, bunnyContext::points.size() * sizeof(point4), &bunnyContext::points[0]);
+    glBufferSubData(GL_ARRAY_BUFFER, bunnyContext::points.size() * sizeof(point4), bunnyContext::colors.size() * sizeof(point4), &bunnyContext::colors[0]);
+
+    glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(bunnyContext::points.size() * sizeof(point4)));
+
+    glBindVertexArray(vao[3]);
+
+    glEnableVertexAttribArray(vPosition);
+    glEnableVertexAttribArray(vColor);
+
     glGenBuffers(1, &wallsContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, wallsContext::buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(wallsContext::points) + sizeof(wallsContext::colors), NULL, GL_STATIC_DRAW);
@@ -433,7 +547,7 @@ void display(void)
     mat4 model_view = Translate(vec3(0.0, 0.0, -2.0)) * Scale(1.0, 1.0, 1.0);
 
     // Draw room
-    glBindVertexArray(vao[2]);
+    glBindVertexArray(vao[3]);
     glBindBuffer(GL_ARRAY_BUFFER, wallsContext::buffer);
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
     glDrawArrays(GL_TRIANGLES, 0, wallsContext::NumVertices);
@@ -454,6 +568,15 @@ void display(void)
         glBindVertexArray(vao[1]);
         glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
         glDrawArrays(GL_TRIANGLES, 0, sphereContext::NumVertices);
+        break;
+    case BUNNY:
+        glBindVertexArray(vao[2]);
+        glBindBuffer(GL_ARRAY_BUFFER, bunnyContext::buffer);
+
+        model_view = model_view * RotateX(BUNNY_X_ROTATION_ANGLE);
+        glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
+
+        glDrawArrays(GL_TRIANGLES, 0, bunnyContext::NumVertices);
         break;
     }
 
@@ -498,7 +621,7 @@ void reshape(int w, int h)
     wallsContext::colorcube();
 
     // Bind wall buffer send updated vertex data
-    glBindVertexArray(vao[2]);
+    glBindVertexArray(vao[3]);
     glBindBuffer(GL_ARRAY_BUFFER, wallsContext::buffer);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(wallsContext::points), wallsContext::points);
 
@@ -606,6 +729,11 @@ void keyboard(unsigned char key, int x, int y)
             toggleColor(cubeContext::colors, cubeContext::NumVertices);
             glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeContext::points), sizeof(cubeContext::colors), cubeContext::colors);
             break;
+
+        case BUNNY:
+            toggleColor(bunnyContext::colors.data(), bunnyContext::NumVertices);
+            glBufferSubData(GL_ARRAY_BUFFER, bunnyContext::points.size() * sizeof(point4), bunnyContext::colors.size() * sizeof(point4), &bunnyContext::colors[0]);
+            break;
         }
     }
 
@@ -651,6 +779,11 @@ void mouse(int button, int state, int x, int y)
             {
                 glBindVertexArray(vao[1]);
                 glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
+            }
+            else if (curBallShape == BUNNY)
+            {
+                glBindVertexArray(vao[2]);
+                glBindBuffer(GL_ARRAY_BUFFER, bunnyContext::buffer);
             }
 
             break;
