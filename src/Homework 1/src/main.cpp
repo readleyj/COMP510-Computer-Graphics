@@ -31,7 +31,7 @@ GLfloat curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
 GLfloat curVerticalSpeed = INITIAL_VERTICAL_SPEED;
 GLfloat curZSpeed = INITIAL_Z_SPEED;
 
-// Bool for toggling between
+// Bool for toggling between 2D and 3D
 bool is3D = true;
 
 // Boundaries for the room
@@ -163,7 +163,7 @@ namespace wallsContext
 {
     GLuint buffer;
 
-    // A room is implement as a cube with the front face missing
+    // A room is implemented as a cube with the front face missing
     // Hence, there will be 36 - 6 = 30 vertices
     const int NumVertices = 30;
 
@@ -820,7 +820,7 @@ int main(int argc, char **argv)
 
     init();
 
-    glutDisplayFunc(display); // set display callback function
+    glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutIdleFunc(idle);
     glutMouseFunc(mouse);
