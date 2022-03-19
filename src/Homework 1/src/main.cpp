@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 
+const std::string PRINT_DELIMITER = "------------------------------------------------------";
+
 typedef vec4 color4;
 typedef vec4 point4;
 
@@ -19,9 +21,9 @@ const GLfloat FOV = 90.0;
 const GLfloat zNear = 0.5;
 const GLfloat zFar = 5.0;
 
+// Angle by which Bunny should be rotated in X-direction
+// Need to do this so Bunny faces the camera
 const GLfloat BUNNY_X_ROTATION_ANGLE = -90.0;
-
-const std::string PRINT_DELIMITER = "------------------------------------------------------";
 
 vec3 displacement = TOP_LEFT_FRONT_CORNER;
 
@@ -349,15 +351,17 @@ void loadModel(std::string path, std::vector<point4> *points)
 
     if (modelFile.is_open())
     {
-        // Skip header
+        // Skip header (tje line with "OFF")
         std::string header;
         std::getline(modelFile, header);
 
         // Parse model info
         modelFile >> numVertices >> numTriangles >> numEdges;
 
+        // Container to hold vertices
         std::vector<point4> baseVertices(numVertices, point4(0.0, 0.0, 0.0, 1.0));
 
+        // Need coordinate range to normalize the model coordinates to [-1, 1]
         point4 maxCoord = point4(std::numeric_limits<float>::min());
         point4 minCoord = point4(std::numeric_limits<float>::max());
 
@@ -382,6 +386,7 @@ void loadModel(std::string path, std::vector<point4> *points)
 
         for (int vertexIdx = 0; vertexIdx < numVertices; vertexIdx++)
         {
+            // Scale vertices to [-1, 1] range
             float scaledX = 2.0f * (baseVertices[vertexIdx].x - minCoord.x) / xRange - 1.0f;
             float scaledY = 2.0f * (baseVertices[vertexIdx].y - minCoord.y) / yRange - 1.0f;
             float scaledZ = 2.0f * (baseVertices[vertexIdx].z - minCoord.z) / zRange - 1.0f;
@@ -393,6 +398,7 @@ void loadModel(std::string path, std::vector<point4> *points)
 
         int numFaces, vertIdxX, vertIdxY, vertIdxZ;
 
+        // Parse triangles and append vertices
         for (int triangleIdx = 0; triangleIdx < numTriangles; triangleIdx++)
         {
             modelFile >> numFaces >> vertIdxX >> vertIdxY >> vertIdxZ;
@@ -470,12 +476,12 @@ void init()
     // Create a vertex array object
     glGenVertexArrays(NUM_SHAPES + 1, vao);
 
+    // Initialization for CUBE
     glBindVertexArray(vao[0]);
 
     glEnableVertexAttribArray(vPosition);
     glEnableVertexAttribArray(vColor);
 
-    // Create and initialize a buffer object
     glGenBuffers(1, &cubeContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cubeContext::points) + sizeof(cubeContext::colors), NULL, GL_STATIC_DRAW);
@@ -485,6 +491,7 @@ void init()
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(cubeContext::points)));
 
+    // Initialization for SPHERE
     glBindVertexArray(vao[1]);
 
     glEnableVertexAttribArray(vPosition);
@@ -499,6 +506,7 @@ void init()
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
 
+    // Initialization for BUNNY
     glBindVertexArray(vao[2]);
 
     glEnableVertexAttribArray(vPosition);
@@ -513,6 +521,7 @@ void init()
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(bunnyContext::points.size() * sizeof(point4)));
 
+    // Initialization for WALLS / ROOM
     glBindVertexArray(vao[3]);
 
     glEnableVertexAttribArray(vPosition);
@@ -575,6 +584,9 @@ void display(void)
         glBindVertexArray(vao[2]);
         glBindBuffer(GL_ARRAY_BUFFER, bunnyContext::buffer);
 
+        // Modify and send new ModelView matrix for Bunny
+        // Rotate in X-direction
+        // Need to do this so BUnny faces camera
         model_view = model_view * RotateX(BUNNY_X_ROTATION_ANGLE);
         glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
 
