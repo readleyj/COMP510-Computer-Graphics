@@ -21,6 +21,8 @@ const GLfloat zFar = 5.0;
 
 const GLfloat BUNNY_X_ROTATION_ANGLE = -90.0;
 
+const std::string PRINT_DELIMITER = "------------------------------------------------------";
+
 vec3 displacement = TOP_LEFT_FRONT_CORNER;
 
 GLfloat curHorizontalSpeed = INITIAL_HORIZONTAL_SPEED;
@@ -740,15 +742,15 @@ void keyboard(unsigned char key, int x, int y)
     // Print input command overview
     if (key == 'H' | key == 'h')
     {
-        printf("----------------------------------------------------------------------------\n");
-        printf("Press H => Print an overview of input commands\n");
-        printf("Press D => Toggle between solid and wireframe rendering\n");
-        printf("Press C => Toggle between colors\n");
-        printf("Press I => Reset ball to initial position\n");
-        printf("Press V => Toggle between 2D and 3D");
-        printf("Press Q => Quit the program\n");
-        printf("Left-mouse click => Toggle between ball shapes\n");
-        printf("----------------------------------------------------------------------------\n");
+        std::cout << PRINT_DELIMITER << std::endl;
+        std::cout << "Press H => Print an overview of input commands" << std::endl;
+        std::cout << "Press D => Toggle between solid and wireframe rendering" << std::endl;
+        std::cout << "Press C => Toggle between colors" << std::endl;
+        std::cout << "Press I => Reset ball to initial position" << std::endl;
+        std::cout << "Press V => Toggle between 2D and 3D" << std::endl;
+        std::cout << "Press Q => Quit the program" << std::endl;
+        std::cout << "Left-mouse click => Toggle between ball shapes" << std::endl;
+        std::cout << PRINT_DELIMITER << std::endl;
     }
 
     // Quit the program
