@@ -25,15 +25,13 @@ point4 vertices[8] = {
     point4(0.5, 0.5, -0.5, 1.0),
     point4(0.5, -0.5, -0.5, 1.0)};
 
-color4 vertex_colors[8] = {
-    color4(0.0, 0.0, 0.0, 1.0), // black
-    color4(1.0, 0.0, 0.0, 1.0), // red
-    color4(1.0, 1.0, 0.0, 1.0), // yellow
-    color4(0.0, 1.0, 0.0, 1.0), // green
-    color4(0.0, 0.0, 1.0, 1.0), // blue
-    color4(1.0, 0.0, 1.0, 1.0), // magenta
+color4 vertex_colors[6] = {
     color4(1.0, 1.0, 1.0, 1.0), // white
-    color4(0.0, 1.0, 1.0, 1.0)  // cyan
+    color4(1.0, 0.0, 0.0, 1.0), // red
+    color4(0.0, 0.0, 1.0, 1.0), // blue
+    color4(1.0, 0.5, 0.0, 1.0), // orange
+    color4(0.0, 1.0, 0.0, 1.0), // green
+    color4(1.0, 1.0, 0.0, 1.0), // yellow
 };
 
 // Array of rotation angles (in degrees) for each coordinate axis
@@ -43,6 +41,16 @@ enum
     Yaxis = 1,
     Zaxis = 2,
     NumAxes = 3
+};
+
+enum CubeColor
+{
+    WHITE,
+    RED,
+    BLUE,
+    ORANGE,
+    GREEN,
+    YELLOW
 };
 
 int Axis = Xaxis;
@@ -55,29 +63,31 @@ GLuint ModelView, Projection;
 
 int Index = 0;
 
-void quad(int a, int b, int c, int d)
+void quad(int a, int b, int c, int d, CubeColor color)
 {
-    colors[Index] = vertex_colors[a];
+    int colorIdx = static_cast<int>(color);
+
+    colors[Index] = vertex_colors[colorIdx];
     points[Index] = vertices[a];
     Index++;
 
-    colors[Index] = vertex_colors[b];
+    colors[Index] = vertex_colors[colorIdx];
     points[Index] = vertices[b];
     Index++;
 
-    colors[Index] = vertex_colors[c];
+    colors[Index] = vertex_colors[colorIdx];
     points[Index] = vertices[c];
     Index++;
 
-    colors[Index] = vertex_colors[a];
+    colors[Index] = vertex_colors[colorIdx];
     points[Index] = vertices[a];
     Index++;
 
-    colors[Index] = vertex_colors[c];
+    colors[Index] = vertex_colors[colorIdx];
     points[Index] = vertices[c];
     Index++;
 
-    colors[Index] = vertex_colors[d];
+    colors[Index] = vertex_colors[colorIdx];
     points[Index] = vertices[d];
     Index++;
 }
@@ -87,12 +97,12 @@ void quad(int a, int b, int c, int d)
 // generate 12 triangles: 36 vertices and 36 colors
 void colorcube()
 {
-    quad(1, 0, 3, 2);
-    quad(2, 3, 7, 6);
-    quad(3, 0, 4, 7);
-    quad(6, 5, 1, 2);
-    quad(4, 5, 6, 7);
-    quad(5, 4, 0, 1);
+    quad(1, 0, 3, 2, WHITE);
+    quad(2, 3, 7, 6, RED);
+    quad(3, 0, 4, 7, BLUE);
+    quad(6, 5, 1, 2, ORANGE);
+    quad(4, 5, 6, 7, GREEN);
+    quad(5, 4, 0, 1, YELLOW);
 }
 
 //----------------------------------------------------------------------------
@@ -139,7 +149,7 @@ void init()
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
     glEnable(GL_DEPTH_TEST);
-    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
 }
 
 //----------------------------------------------------------------------------
