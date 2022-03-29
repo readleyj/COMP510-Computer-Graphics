@@ -96,8 +96,10 @@ namespace RubicsCubeContext
                 point4(end_x_coord, start_y_coord, start_z_coord, 1.0),
             };
 
-            quad(1, 0, 3, 2, cube_idx, 0, RED, base_vertices);
-            quad(2, 3, 7, 6, cube_idx, 1, RED, base_vertices);
+            FaceColor color = (cube_idx % 2 == 0) ? BLUE : GREEN;
+
+            quad(1, 0, 3, 2, cube_idx, 0, color, base_vertices);
+            quad(2, 3, 7, 6, cube_idx, 1, BLUE, base_vertices);
             quad(3, 0, 4, 7, cube_idx, 2, RED, base_vertices);
             quad(6, 5, 1, 2, cube_idx, 3, RED, base_vertices);
             quad(4, 5, 6, 7, cube_idx, 4, RED, base_vertices);
@@ -108,6 +110,7 @@ namespace RubicsCubeContext
         {
             GLuint cur_buffer = vertex_buffers[i];
 
+            glBindVertexArray(vaos[i]);
             glBindBuffer(GL_ARRAY_BUFFER, cur_buffer);
 
             glBufferData(GL_ARRAY_BUFFER, points[i].size() * sizeof(point4) + colors[i].size() * sizeof(point4), NULL, GL_STATIC_DRAW);
@@ -125,7 +128,7 @@ namespace RubicsCubeContext
 
         for (size_t i = 0; i < NUM_CUBES; i++)
         {
-            model_view_matrices[i] = Translate(0.0, 0.0, 0.0);
+            model_view_matrices[i] = Translate(0.0, 2.0, 0.0);
         }
     }
 
@@ -134,6 +137,7 @@ namespace RubicsCubeContext
         for (size_t i = 0; i < NUM_CUBES; i++)
         {
             glBindVertexArray(vaos[i]);
+            glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[i]);
 
             GLuint vPosition = glGetAttribLocation(PROGRAM, "vPosition");
             glEnableVertexAttribArray(vPosition);
