@@ -12,9 +12,9 @@ const int RUBICS_CUBE_DIM = 3;
 const int NUM_CUBES = RUBICS_CUBE_DIM * RUBICS_CUBE_DIM * RUBICS_CUBE_DIM;
 const int NUM_CUBE_FACES = 6;
 
-const GLfloat CUBE_WIDTH = 0.4;
-const GLfloat CUBE_HEIGHT = 0.4;
-const GLfloat CUBE_DEPTH = 0.4;
+const GLfloat CUBE_WIDTH = 0.35;
+const GLfloat CUBE_HEIGHT = 0.35;
+const GLfloat CUBE_DEPTH = 0.35;
 const GLfloat BORDER_WIDTH = 0.01;
 
 const GLfloat START_COORD = -0.6;
@@ -25,7 +25,7 @@ const GLfloat zNear = 0.5;
 const GLfloat zFar = 5.0;
 
 color4 VERTEX_COLORS[7] = {
-    color4(0.5, 0.5, 0.5, 1.0), // grey
+    color4(1.0, 1.0, 1.0, 1.0), // white
     color4(1.0, 0.0, 0.0, 1.0), // red
     color4(0.0, 0.0, 1.0, 1.0), // blue
     color4(1.0, 0.5, 0.0, 1.0), // orange
@@ -36,7 +36,7 @@ color4 VERTEX_COLORS[7] = {
 
 enum FaceColor
 {
-    GREY,
+    WHITE,
     RED,
     BLUE,
     ORANGE,
@@ -176,7 +176,7 @@ namespace RubicsCubeContext
             }
             else if (face_to_cube_set[static_cast<int>(TOP)].count(cube_idx))
             {
-                color_top = GREY;
+                color_top = WHITE;
             }
 
             if (face_to_cube_set[static_cast<int>(BACK)].count(cube_idx))
