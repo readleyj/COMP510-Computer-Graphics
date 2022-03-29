@@ -26,6 +26,8 @@ const GLfloat zFar = 5.0;
 
 const vec4 camera_pos = vec4(0.0, 1.0, -2.0, 1.0);
 
+mat4 globalModelView;
+
 color4 VERTEX_COLORS[7] = {
     color4(1.0, 1.0, 1.0, 1.0), // white
     color4(1.0, 0.0, 0.0, 1.0), // red
@@ -228,10 +230,13 @@ namespace RubicsCubeContext
         glGenVertexArrays(NUM_CUBES, vaos);
 
         loadData();
+    }
 
+    void initModelViewMatrices()
+    {
         for (size_t i = 0; i < NUM_CUBES; i++)
         {
-            model_view_matrices[i] = Translate(0.0, 0.0, -2.0);
+            model_view_matrices[i] = globalModelView;
         }
     }
 
@@ -250,9 +255,9 @@ namespace RubicsCubeContext
             glEnableVertexAttribArray(vColor);
             glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(points[i].size() * sizeof(point4)));
 
-            // model_view_matrices[i] *= RotateX(0.5);
+            model_view_matrices[i] *= RotateX(0.5) * RotateY(0.5) * RotateZ(0.5);
 
-            // glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view_matrices[i]);
+            glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view_matrices[i]);
 
             glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES_PER_CUBE);
         }
@@ -312,6 +317,16 @@ void init()
     projection = Perspective(FOV, 1.0, zNear, zFar);
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
+    vec4 at = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 eye = camera_pos;
+    vec4 up = vec4(0.0, 1.0, 0.0, 1.0);
+
+    mat4 model_view = LookAt(eye, at, up);
+
+    globalModelView = model_view;
+
+    RubicsCubeContext::initModelViewMatrices();
+
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 1.0);
 }
@@ -321,13 +336,6 @@ void init()
 void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    vec4 at = vec4(0.0, 0.0, 0.0, 1.0);
-    vec4 eye = camera_pos;
-    vec4 up = vec4(0.0, 1.0, 0.0, 1.0);
-
-    mat4 model_view = LookAt(eye, at, up);
-    glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
 
     RubicsCubeContext::render();
 
