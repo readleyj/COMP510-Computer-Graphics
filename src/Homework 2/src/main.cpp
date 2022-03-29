@@ -1,4 +1,5 @@
 #include <vector>
+#include <set>
 
 #include "Angel.h"
 
@@ -9,6 +10,7 @@ GLuint PROGRAM;
 
 const int RUBICS_CUBE_DIM = 3;
 const int NUM_CUBES = RUBICS_CUBE_DIM * RUBICS_CUBE_DIM * RUBICS_CUBE_DIM;
+const int NUM_CUBE_FACES = 6;
 
 const GLfloat CUBE_WIDTH = 0.4;
 const GLfloat CUBE_HEIGHT = 0.4;
@@ -21,23 +23,36 @@ const GLfloat FOV = 90.0;
 const GLfloat zNear = 0.5;
 const GLfloat zFar = 5.0;
 
-color4 VERTEX_COLORS[6] = {
-    color4(1.0, 1.0, 1.0, 1.0), // white
+color4 VERTEX_COLORS[7] = {
+    color4(0.5, 0.5, 0.5, 1.0), // grey
     color4(1.0, 0.0, 0.0, 1.0), // red
     color4(0.0, 0.0, 1.0, 1.0), // blue
     color4(1.0, 0.5, 0.0, 1.0), // orange
     color4(0.0, 1.0, 0.0, 1.0), // green
     color4(1.0, 1.0, 0.0, 1.0), // yellow
+    color4(0.0, 0.0, 0.0, 1.0), // yellow
 };
 
 enum FaceColor
 {
-    WHITE,
+    GREY,
     RED,
     BLUE,
     ORANGE,
     GREEN,
-    YELLOW
+    YELLOW,
+    BLACK
+};
+
+enum FacePosition
+{
+    LEFT,
+    RIGHT,
+    BOTTOM,
+    TOP,
+    BACK,
+    FRONT,
+    NUM_POSITIONS
 };
 
 // Model-view and projection matrices uniform location
@@ -49,6 +64,9 @@ namespace RubicsCubeContext
 {
     const int NUM_VERTICES_PER_CUBE = 36;
     const int NUM_VERTICES_PER_FACE = 6;
+
+    // Contains a set of cube indices for each afce
+    std::vector<std::set<int>> face_to_cube_set;
 
     GLuint vertex_buffers[NUM_CUBES];
     GLuint vaos[NUM_CUBES];
@@ -64,10 +82,49 @@ namespace RubicsCubeContext
     void loadData()
     {
 
-        for (size_t i = 0; i < NUM_CUBES; i++)
+        face_to_cube_set.resize(NUM_CUBE_FACES);
+
+        for (size_t cube_idx = 0; cube_idx < NUM_CUBES; cube_idx++)
         {
-            points[i].resize(NUM_VERTICES_PER_CUBE);
-            colors[i].resize(NUM_VERTICES_PER_CUBE);
+            points[cube_idx].resize(NUM_VERTICES_PER_CUBE);
+            colors[cube_idx].resize(NUM_VERTICES_PER_CUBE);
+
+            int x_idx = cube_idx / (RUBICS_CUBE_DIM * RUBICS_CUBE_DIM);
+            int y_idx = (cube_idx / RUBICS_CUBE_DIM) % RUBICS_CUBE_DIM;
+            int z_idx = cube_idx % RUBICS_CUBE_DIM;
+
+            // Right Face
+            if (z_idx == (RUBICS_CUBE_DIM - 1))
+            {
+                face_to_cube_set[static_cast<int>(RIGHT)].insert(cube_idx);
+            }
+            // Left Face
+            else if (z_idx == 0)
+            {
+                face_to_cube_set[static_cast<int>(LEFT)].insert(cube_idx);
+            }
+
+            // Top Face
+            if (y_idx == (RUBICS_CUBE_DIM - 1))
+            {
+                face_to_cube_set[static_cast<int>(TOP)].insert(cube_idx);
+            }
+            // Bottom Face
+            else if (y_idx == 0)
+            {
+                face_to_cube_set[static_cast<int>(BOTTOM)].insert(cube_idx);
+            }
+
+            // Back Face
+            if (x_idx == (RUBICS_CUBE_DIM - 1))
+            {
+                face_to_cube_set[static_cast<int>(BACK)].insert(cube_idx);
+            }
+            // Front Face
+            else if (x_idx == 0)
+            {
+                face_to_cube_set[static_cast<int>(FRONT)].insert(cube_idx);
+            }
         }
 
         for (size_t cube_idx = 0; cube_idx < NUM_CUBES; cube_idx++)
@@ -96,14 +153,57 @@ namespace RubicsCubeContext
                 point4(end_x_coord, start_y_coord, start_z_coord, 1.0),
             };
 
-            FaceColor color = (cube_idx % 2 == 0) ? BLUE : GREEN;
+            FaceColor color_left = BLACK;
+            FaceColor color_right = BLACK;
+            FaceColor color_bottom = BLACK;
+            FaceColor color_top = BLACK;
+            FaceColor color_back = BLACK;
+            FaceColor color_front = BLACK;
 
-            quad(1, 0, 3, 2, cube_idx, 0, color, base_vertices);
-            quad(2, 3, 7, 6, cube_idx, 1, BLUE, base_vertices);
-            quad(3, 0, 4, 7, cube_idx, 2, RED, base_vertices);
-            quad(6, 5, 1, 2, cube_idx, 3, RED, base_vertices);
-            quad(4, 5, 6, 7, cube_idx, 4, RED, base_vertices);
-            quad(5, 4, 0, 1, cube_idx, 5, RED, base_vertices);
+            if (face_to_cube_set[static_cast<int>(LEFT)].count(cube_idx))
+            {
+                color_left = ORANGE;
+            }
+            else if (face_to_cube_set[static_cast<int>(RIGHT)].count(cube_idx))
+            {
+                color_right = RED;
+            }
+
+            if (face_to_cube_set[static_cast<int>(BOTTOM)].count(cube_idx))
+            {
+                color_bottom = YELLOW;
+            }
+            else if (face_to_cube_set[static_cast<int>(TOP)].count(cube_idx))
+            {
+                color_top = GREY;
+            }
+
+            if (face_to_cube_set[static_cast<int>(BACK)].count(cube_idx))
+            {
+                color_back = BLUE;
+            }
+            else if (face_to_cube_set[static_cast<int>(FRONT)].count(cube_idx))
+            {
+                color_front = GREEN;
+            }
+
+            // Right
+            quad(1, 0, 3, 2, cube_idx, 0, color_right, base_vertices);
+
+            // Back
+            quad(2, 3, 7, 6, cube_idx, 1, color_back, base_vertices);
+
+            // Bottom
+            quad(3, 0, 4, 7, cube_idx, 2, color_bottom, base_vertices);
+
+            // Top
+            quad(6, 5, 1, 2, cube_idx, 3, color_top, base_vertices);
+
+            // Left
+            quad(4, 5, 6, 7, cube_idx, 4, color_left, base_vertices);
+
+            // Front
+            quad(5, 4, 0, 1, cube_idx, 5, color_front, base_vertices);
         }
 
         for (size_t i = 0; i < NUM_CUBES; i++)
@@ -128,7 +228,7 @@ namespace RubicsCubeContext
 
         for (size_t i = 0; i < NUM_CUBES; i++)
         {
-            model_view_matrices[i] = Translate(0.0, 2.0, 0.0);
+            model_view_matrices[i] = Translate(0.0, 0.0, -2.0);
         }
     }
 
@@ -147,7 +247,9 @@ namespace RubicsCubeContext
             glEnableVertexAttribArray(vColor);
             glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(points[i].size() * sizeof(point4)));
 
-            // glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view_matrices[i]);
+            model_view_matrices[i] *= RotateX(0.5);
+
+            glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view_matrices[i]);
 
             glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES_PER_CUBE);
         }
