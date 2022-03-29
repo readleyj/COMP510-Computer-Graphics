@@ -15,6 +15,7 @@ const int NUM_CUBE_FACES = 6;
 const GLfloat CUBE_WIDTH = 0.4;
 const GLfloat CUBE_HEIGHT = 0.4;
 const GLfloat CUBE_DEPTH = 0.4;
+const GLfloat BORDER_WIDTH = 0.01;
 
 const GLfloat START_COORD = -0.6;
 const GLfloat END_COORD = 0.6;
@@ -133,14 +134,14 @@ namespace RubicsCubeContext
             int y_idx = (cube_idx / RUBICS_CUBE_DIM) % RUBICS_CUBE_DIM;
             int z_idx = cube_idx % RUBICS_CUBE_DIM;
 
-            GLfloat start_x_coord = START_COORD + CUBE_WIDTH * x_idx;
-            GLfloat end_x_coord = std::min(START_COORD + CUBE_WIDTH * (x_idx + 1), END_COORD);
+            GLfloat start_x_coord = START_COORD + CUBE_WIDTH * x_idx + BORDER_WIDTH;
+            GLfloat end_x_coord = std::min(START_COORD + CUBE_WIDTH * (x_idx + 1), END_COORD) - BORDER_WIDTH;
 
-            GLfloat start_y_coord = START_COORD + CUBE_HEIGHT * y_idx;
-            GLfloat end_y_coord = std::min(START_COORD + CUBE_HEIGHT * (y_idx + 1), END_COORD);
+            GLfloat start_y_coord = START_COORD + CUBE_HEIGHT * y_idx + BORDER_WIDTH;
+            GLfloat end_y_coord = std::min(START_COORD + CUBE_HEIGHT * (y_idx + 1), END_COORD) - BORDER_WIDTH;
 
-            GLfloat start_z_coord = START_COORD + CUBE_DEPTH * z_idx;
-            GLfloat end_z_coord = std::min(START_COORD + CUBE_DEPTH * (z_idx + 1), END_COORD);
+            GLfloat start_z_coord = START_COORD + CUBE_DEPTH * z_idx + BORDER_WIDTH;
+            GLfloat end_z_coord = std::min(START_COORD + CUBE_DEPTH * (z_idx + 1), END_COORD) - BORDER_WIDTH;
 
             point4 base_vertices[8] = {
                 point4(start_x_coord, start_y_coord, end_z_coord, 1.0),
@@ -310,7 +311,7 @@ void init()
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
     glEnable(GL_DEPTH_TEST);
-    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
 }
 
 //----------------------------------------------------------------------------
