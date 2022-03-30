@@ -24,7 +24,7 @@ const GLfloat FOV = 90.0;
 const GLfloat zNear = 0.5;
 const GLfloat zFar = 5.0;
 
-const vec4 camera_pos = vec4(0.0, 1.0, -2.0, 0.5);
+const vec4 camera_pos = vec4(-3.0, 1.5, 0.0, 1.0);
 
 mat4 globalModelView;
 
@@ -254,6 +254,11 @@ namespace RubicsCubeContext
             GLuint vColor = glGetAttribLocation(PROGRAM, "vColor");
             glEnableVertexAttribArray(vColor);
             glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(points[i].size() * sizeof(point4)));
+
+            for (const int &cubeIdx : face_to_cube_set[static_cast<int>(TOP)])
+            {
+                model_view_matrices[cubeIdx] *= RotateY(0.1);
+            }
 
             glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view_matrices[i]);
 
