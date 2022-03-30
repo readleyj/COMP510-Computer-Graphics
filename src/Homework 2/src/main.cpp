@@ -26,7 +26,20 @@ const GLfloat zFar = 5.0;
 
 const vec4 camera_pos = vec4(-3.0, 1.5, 0.0, 1.0);
 
+int old_time_since_start = 0;
+
 mat4 globalModelView;
+
+enum
+{
+    Xaxis = 0,
+    Yaxis = 1,
+    Zaxis = 2,
+    NumAxes = 3
+};
+
+int Axis = Xaxis;
+GLfloat Theta[NumAxes] = {0.0, 0.0, 0.0};
 
 color4 VERTEX_COLORS[7] = {
     color4(1.0, 1.0, 1.0, 1.0), // white
@@ -255,12 +268,11 @@ namespace RubicsCubeContext
             glEnableVertexAttribArray(vColor);
             glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(points[i].size() * sizeof(point4)));
 
-            for (const int &cubeIdx : face_to_cube_set[static_cast<int>(TOP)])
-            {
-                model_view_matrices[cubeIdx] *= RotateY(0.1);
-            }
+            mat4 new_model_view = model_view_matrices[i] * RotateX(Theta[Xaxis]) *
+                                  RotateY(Theta[Yaxis]) *
+                                  RotateZ(Theta[Zaxis]);
 
-            glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view_matrices[i]);
+            glUniformMatrix4fv(ModelView, 1, GL_TRUE, new_model_view);
 
             glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES_PER_CUBE);
         }
@@ -348,13 +360,24 @@ void display(void)
 
 void keyboard(unsigned char key, int x, int y)
 {
-    switch (key)
+    bool isShiftActive = glutGetModifiers() && GLUT_ACTIVE_SHIFT;
+    int modifier = isShiftActive ? -1 : 1;
+
+    if (key == 'W' || key == 'w')
     {
-    case 033:
-    case 'q':
-    case 'Q':
+        Theta[Xaxis] += modifier * 90.0;
+    }
+    else if (key == 'E' || key == 'e')
+    {
+        Theta[Yaxis] += modifier * 90.0;
+    }
+    else if (key == 'R' || key == 'r')
+    {
+        Theta[Zaxis] += modifier * 90.0;
+    }
+    else if (key == 'q' || key == 'Q' || key == 033)
+    {
         exit(EXIT_SUCCESS);
-        break;
     }
 }
 
@@ -362,18 +385,21 @@ void keyboard(unsigned char key, int x, int y)
 
 void mouse(int button, int state, int x, int y)
 {
-    if (state == GLUT_DOWN)
-    {
-        switch (button)
-        {
-        }
-    }
 }
 
 //----------------------------------------------------------------------------
 
 void idle(void)
 {
+    if (Theta[Axis] > 360.0)
+    {
+        Theta[Axis] -= 360.0;
+    }
+    else if (Theta[Axis] < 0.0)
+    {
+        Theta[Axis] += 360.0;
+    }
+
     glutPostRedisplay();
 }
 
