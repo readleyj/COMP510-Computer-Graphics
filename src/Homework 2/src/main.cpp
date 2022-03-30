@@ -26,7 +26,7 @@ const GLfloat zFar = 5.0;
 
 const vec4 camera_pos = vec4(-3.0, 1.5, 0.0, 1.0);
 
-int old_time_since_start = 0;
+GLfloat rotation_increment = 3.0;
 
 mat4 globalModelView;
 
@@ -363,17 +363,17 @@ void keyboard(unsigned char key, int x, int y)
     bool isShiftActive = glutGetModifiers() && GLUT_ACTIVE_SHIFT;
     int modifier = isShiftActive ? -1 : 1;
 
-    if (key == 'W' || key == 'w')
+    if (key == 'H' || key == 'h')
     {
-        Theta[Xaxis] += modifier * 90.0;
+        Theta[Xaxis] += modifier * rotation_increment;
     }
-    else if (key == 'E' || key == 'e')
+    else if (key == 'J' || key == 'j')
     {
-        Theta[Yaxis] += modifier * 90.0;
+        Theta[Yaxis] += modifier * rotation_increment;
     }
-    else if (key == 'R' || key == 'r')
+    else if (key == 'K' || key == 'k')
     {
-        Theta[Zaxis] += modifier * 90.0;
+        Theta[Zaxis] += modifier * rotation_increment;
     }
     else if (key == 'q' || key == 'Q' || key == 033)
     {
