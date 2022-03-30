@@ -26,7 +26,7 @@ const GLfloat zFar = 5.0;
 
 const vec4 camera_pos = vec4(-3.0, 1.5, 0.0, 1.0);
 
-GLfloat rotation_increment = 3.0;
+GLfloat rotation_increment = 5.0;
 
 mat4 globalModelView;
 
