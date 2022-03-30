@@ -12,19 +12,19 @@ const int RUBICS_CUBE_DIM = 3;
 const int NUM_CUBES = RUBICS_CUBE_DIM * RUBICS_CUBE_DIM * RUBICS_CUBE_DIM;
 const int NUM_CUBE_FACES = 6;
 
-const GLfloat CUBE_WIDTH = 0.35;
-const GLfloat CUBE_HEIGHT = 0.35;
-const GLfloat CUBE_DEPTH = 0.35;
-const GLfloat BORDER_WIDTH = 0.01;
+const GLfloat CUBE_WIDTH = 0.45;
+const GLfloat CUBE_HEIGHT = 0.45;
+const GLfloat CUBE_DEPTH = 0.45;
+const GLfloat BORDER_WIDTH = 0.025;
 
-const GLfloat START_COORD = -0.6;
-const GLfloat END_COORD = 0.6;
+const GLfloat START_COORD = -0.7;
+const GLfloat END_COORD = 0.7;
 
 const GLfloat FOV = 90.0;
 const GLfloat zNear = 0.5;
 const GLfloat zFar = 5.0;
 
-const vec4 camera_pos = vec4(0.0, 1.0, -2.0, 1.0);
+const vec4 camera_pos = vec4(0.0, 1.0, -2.0, 0.5);
 
 mat4 globalModelView;
 
@@ -138,14 +138,14 @@ namespace RubicsCubeContext
             int y_idx = (cube_idx / RUBICS_CUBE_DIM) % RUBICS_CUBE_DIM;
             int z_idx = cube_idx % RUBICS_CUBE_DIM;
 
-            GLfloat start_x_coord = START_COORD + CUBE_WIDTH * x_idx + BORDER_WIDTH;
-            GLfloat end_x_coord = std::min(START_COORD + CUBE_WIDTH * (x_idx + 1), END_COORD) - BORDER_WIDTH;
+            GLfloat start_x_coord = START_COORD + x_idx * CUBE_WIDTH + x_idx * BORDER_WIDTH;
+            GLfloat end_x_coord = start_x_coord + CUBE_WIDTH;
 
-            GLfloat start_y_coord = START_COORD + CUBE_HEIGHT * y_idx + BORDER_WIDTH;
-            GLfloat end_y_coord = std::min(START_COORD + CUBE_HEIGHT * (y_idx + 1), END_COORD) - BORDER_WIDTH;
+            GLfloat start_y_coord = START_COORD + y_idx * CUBE_HEIGHT + y_idx * BORDER_WIDTH;
+            GLfloat end_y_coord = start_y_coord + CUBE_HEIGHT;
 
-            GLfloat start_z_coord = START_COORD + CUBE_DEPTH * z_idx + BORDER_WIDTH;
-            GLfloat end_z_coord = std::min(START_COORD + CUBE_DEPTH * (z_idx + 1), END_COORD) - BORDER_WIDTH;
+            GLfloat start_z_coord = START_COORD + z_idx * CUBE_DEPTH + z_idx * BORDER_WIDTH;
+            GLfloat end_z_coord = start_z_coord + CUBE_DEPTH;
 
             point4 base_vertices[8] = {
                 point4(start_x_coord, start_y_coord, end_z_coord, 1.0),
@@ -254,8 +254,6 @@ namespace RubicsCubeContext
             GLuint vColor = glGetAttribLocation(PROGRAM, "vColor");
             glEnableVertexAttribArray(vColor);
             glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(points[i].size() * sizeof(point4)));
-
-            model_view_matrices[i] *= RotateX(0.5) * RotateY(0.5) * RotateZ(0.5);
 
             glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view_matrices[i]);
 
