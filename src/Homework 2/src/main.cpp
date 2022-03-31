@@ -26,20 +26,28 @@ const GLfloat zFar = 5.0;
 
 const vec4 camera_pos = vec4(-3.0, 1.5, 0.0, 1.0);
 
+vec4 eye;
+vec4 up;
+vec4 at;
+
 GLfloat rotation_increment = 5.0;
 
 mat4 globalModelView;
 
-enum
-{
-    Xaxis = 0,
-    Yaxis = 1,
-    Zaxis = 2,
-    NumAxes = 3
-};
+float angle = 0.0;
+float axis[3];
 
-int Axis = Xaxis;
-GLfloat Theta[NumAxes] = {0.0, 0.0, 0.0};
+bool trackingMouse = false;
+bool redrawContinue = false;
+bool trackballMove = false;
+
+float lastPos[3] = {0.0, 0.0, 0.0};
+
+int curx, cury;
+int startX, startY;
+
+int curWidth;
+int curHeight;
 
 color4 VERTEX_COLORS[7] = {
     color4(1.0, 1.0, 1.0, 1.0), // white
@@ -75,6 +83,79 @@ enum FacePosition
 
 // Model-view and projection matrices uniform location
 GLuint ModelView, Projection;
+
+float radians(float degrees)
+{
+    return degrees * M_PI / 180.0;
+}
+
+mat4 rotate(float angle, vec3 axis)
+{
+    vec3 v = normalize(axis);
+
+    float x = v[0];
+    float y = v[1];
+    float z = v[2];
+
+    float c = cos(radians(angle));
+    float omc = 1.0 - c;
+    float s = sin(radians(angle));
+
+    mat4 result = mat4(
+        vec4(x * x * omc + c, x * y * omc - z * s, x * z * omc + y * s, 0.0),
+        vec4(x * y * omc + z * s, y * y * omc + c, y * z * omc - x * s, 0.0),
+        vec4(x * z * omc - y * s, y * z * omc + x * s, z * z * omc + c, 0.0),
+        vec4());
+
+    return result;
+}
+
+void set_trackball_vector(int x, int y, float v[3])
+{
+    float d;
+    float a;
+
+    v[0] = (2.0 * x - curWidth) / curWidth;
+    v[1] = (curHeight - 2.0F * y) / curHeight;
+
+    d = sqrt(v[0] * v[0] + v[1] * v[1]);
+
+    v[2] = cos((M_PI / 2.0) * ((d < 1.0) ? d : 1.0));
+
+    a = 1.0 / sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+
+    v[0] *= a;
+    v[1] *= a;
+    v[2] *= a;
+}
+
+void startMotion(int x, int y)
+{
+    trackingMouse = true;
+    redrawContinue = false;
+
+    startX = x;
+    startY = y;
+    curx = x;
+    cury = y;
+
+    set_trackball_vector(x, y, lastPos);
+    trackballMove = true;
+}
+
+void stopMotion(int x, int y)
+{
+    trackingMouse = false;
+
+    if (startX != x || startY != y)
+        redrawContinue = true;
+    else
+    {
+        angle = 0.0;
+        redrawContinue = false;
+        trackballMove = false;
+    }
+}
 
 //----------------------------------------------------------------------------
 
@@ -268,9 +349,12 @@ namespace RubicsCubeContext
             glEnableVertexAttribArray(vColor);
             glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(points[i].size() * sizeof(point4)));
 
-            mat4 new_model_view = model_view_matrices[i] * RotateX(Theta[Xaxis]) *
-                                  RotateY(Theta[Yaxis]) *
-                                  RotateZ(Theta[Zaxis]);
+            // for (int cubeIdx : face_to_cube_set[static_cast<int>(FRONT)])
+            // {
+            //     model_view_matrices[cubeIdx] *= RotateX(0.1);
+            // }
+
+            mat4 new_model_view = globalModelView;
 
             glUniformMatrix4fv(ModelView, 1, GL_TRUE, new_model_view);
 
@@ -310,7 +394,6 @@ namespace RubicsCubeContext
         points[cube_idx][index] = base_vertices[d];
         index++;
     }
-
 }
 
 //----------------------------------------------------------------------------
@@ -332,9 +415,9 @@ void init()
     projection = Perspective(FOV, 1.0, zNear, zFar);
     glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
-    vec4 at = vec4(0.0, 0.0, 0.0, 1.0);
-    vec4 eye = camera_pos;
-    vec4 up = vec4(0.0, 1.0, 0.0, 1.0);
+    at = vec4(0.0, 0.0, 0.0, 1.0);
+    eye = camera_pos;
+    up = vec4(0.0, 1.0, 0.0, 1.0);
 
     mat4 model_view = LookAt(eye, at, up);
 
@@ -352,6 +435,18 @@ void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    if (trackballMove)
+    {
+        mat4 rotationMatrix = rotate(angle, vec3(axis[0], axis[1], axis[2]));
+
+        printf("%f %f %f %f\n", axis[0], axis[1], axis[2], angle);
+
+        eye = rotationMatrix * eye;
+        up = rotationMatrix * up;
+
+        globalModelView = LookAt(eye, at, up);
+    }
+
     RubicsCubeContext::render();
 
     glutSwapBuffers();
@@ -360,47 +455,79 @@ void display(void)
 
 void keyboard(unsigned char key, int x, int y)
 {
-    bool isShiftActive = glutGetModifiers() && GLUT_ACTIVE_SHIFT;
-    int modifier = isShiftActive ? -1 : 1;
-
-    if (key == 'H' || key == 'h')
-    {
-        Theta[Xaxis] += modifier * rotation_increment;
-    }
-    else if (key == 'J' || key == 'j')
-    {
-        Theta[Yaxis] += modifier * rotation_increment;
-    }
-    else if (key == 'K' || key == 'k')
-    {
-        Theta[Zaxis] += modifier * rotation_increment;
-    }
-    else if (key == 'q' || key == 'Q' || key == 033)
-    {
-        exit(EXIT_SUCCESS);
-    }
 }
 
 //----------------------------------------------------------------------------
 
 void mouse(int button, int state, int x, int y)
 {
+
+    if (button == GLUT_LEFT_BUTTON)
+        switch (state)
+        {
+        case GLUT_DOWN:
+            y = curHeight - y;
+            startMotion(x, y);
+            break;
+        case GLUT_UP:
+            stopMotion(x, y);
+            break;
+        }
+}
+
+//----------------------------------------------------------------------------
+
+void mouseMotion(int x, int y)
+{
+    float curPos[3];
+
+    float dx;
+    float dy;
+    float dz;
+
+    set_trackball_vector(x, y, curPos);
+
+    if (trackingMouse)
+    {
+        dx = curPos[0] - lastPos[0];
+        dy = curPos[1] - lastPos[1];
+        dz = curPos[2] - lastPos[2];
+    }
+
+    if (dx || dy || dz)
+    {
+        angle = 90.0 * sqrt(dx * dx + dy * dy + dz * dz);
+        axis[0] = lastPos[1] * curPos[2] - lastPos[2] * curPos[1];
+        axis[1] = lastPos[2] * curPos[0] - lastPos[0] * curPos[2];
+        axis[2] = lastPos[0] * curPos[1] - lastPos[1] * curPos[0];
+
+        lastPos[0] = curPos[0];
+        lastPos[1] = curPos[1];
+        lastPos[2] = curPos[2];
+    }
+
+    glutPostRedisplay();
+}
+
+//----------------------------------------------------------------------------
+
+void reshape(int w, int h)
+{
+    curWidth = w;
+    curHeight = h;
+
+    glViewport(0, 0, w, h);
 }
 
 //----------------------------------------------------------------------------
 
 void idle(void)
 {
-    if (Theta[Axis] > 360.0)
-    {
-        Theta[Axis] -= 360.0;
-    }
-    else if (Theta[Axis] < 0.0)
-    {
-        Theta[Axis] += 360.0;
-    }
 
-    glutPostRedisplay();
+    if (redrawContinue)
+    {
+        glutPostRedisplay();
+    }
 }
 
 int main(int argc, char **argv)
@@ -418,6 +545,8 @@ int main(int argc, char **argv)
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
     glutMouseFunc(mouse);
+    glutReshapeFunc(reshape);
+    glutMotionFunc(mouseMotion);
     glutIdleFunc(idle);
 
     glutMainLoop();
