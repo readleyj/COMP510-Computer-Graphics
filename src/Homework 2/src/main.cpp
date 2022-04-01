@@ -136,6 +136,7 @@ void startMotion(int x, int y)
 
     startX = x;
     startY = y;
+
     curx = x;
     cury = y;
 
@@ -323,15 +324,12 @@ namespace RubicsCubeContext
         glGenBuffers(NUM_CUBES, vertex_buffers);
         glGenVertexArrays(NUM_CUBES, vaos);
 
-        loadData();
-    }
-
-    void initModelViewMatrices()
-    {
         for (size_t i = 0; i < NUM_CUBES; i++)
         {
-            model_view_matrices[i] = globalModelView;
+            model_view_matrices[i] = mat4();
         }
+
+        loadData();
     }
 
     void render()
@@ -349,12 +347,12 @@ namespace RubicsCubeContext
             glEnableVertexAttribArray(vColor);
             glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(points[i].size() * sizeof(point4)));
 
-            // for (int cubeIdx : face_to_cube_set[static_cast<int>(FRONT)])
-            // {
-            //     model_view_matrices[cubeIdx] *= RotateX(0.1);
-            // }
+            for (int cubeIdx : face_to_cube_set[static_cast<int>(FRONT)])
+            {
+                model_view_matrices[cubeIdx] *= RotateX(0.1);
+            }
 
-            mat4 new_model_view = globalModelView;
+            mat4 new_model_view = globalModelView * model_view_matrices[i];
 
             glUniformMatrix4fv(ModelView, 1, GL_TRUE, new_model_view);
 
@@ -423,8 +421,6 @@ void init()
 
     globalModelView = model_view;
 
-    RubicsCubeContext::initModelViewMatrices();
-
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0, 0.0, 0.0, 1.0);
 }
@@ -439,10 +435,9 @@ void display(void)
     {
         mat4 rotationMatrix = rotate(angle, vec3(axis[0], axis[1], axis[2]));
 
-        printf("%f %f %f %f\n", axis[0], axis[1], axis[2], angle);
-
         eye = rotationMatrix * eye;
         up = rotationMatrix * up;
+        at = rotationMatrix * at;
 
         globalModelView = LookAt(eye, at, up);
     }
@@ -462,11 +457,10 @@ void keyboard(unsigned char key, int x, int y)
 void mouse(int button, int state, int x, int y)
 {
 
-    if (button == GLUT_LEFT_BUTTON)
+    if (button == GLUT_MIDDLE_BUTTON)
         switch (state)
         {
         case GLUT_DOWN:
-            y = curHeight - y;
             startMotion(x, y);
             break;
         case GLUT_UP:
