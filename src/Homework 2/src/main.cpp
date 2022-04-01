@@ -30,20 +30,16 @@ vec4 eye;
 vec4 up;
 vec4 at;
 
-GLfloat rotation_increment = 5.0;
-
 mat4 globalModelView;
 
 float angle = 0.0;
 float axis[3];
 
-bool trackingMouse = false;
-bool redrawContinue = false;
 bool trackballMove = false;
 
 float lastPos[3] = {0.0, 0.0, 0.0};
 
-int curx, cury;
+int curX, curY;
 int startX, startY;
 
 int curWidth;
@@ -131,31 +127,21 @@ void set_trackball_vector(int x, int y, float v[3])
 
 void startMotion(int x, int y)
 {
-    trackingMouse = true;
-    redrawContinue = false;
-
     startX = x;
     startY = y;
 
-    curx = x;
-    cury = y;
+    curX = x;
+    curY = y;
 
     set_trackball_vector(x, y, lastPos);
+
     trackballMove = true;
 }
 
 void stopMotion(int x, int y)
 {
-    trackingMouse = false;
-
-    if (startX != x || startY != y)
-        redrawContinue = true;
-    else
-    {
-        angle = 0.0;
-        redrawContinue = false;
-        trackballMove = false;
-    }
+    trackballMove = false;
+    angle = 0.0;
 }
 
 //----------------------------------------------------------------------------
@@ -431,7 +417,7 @@ void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (trackballMove)
+    if (trackballMove && (axis[0] || axis[1] || axis[2]))
     {
         mat4 rotationMatrix = rotate(angle, vec3(axis[0], axis[1], axis[2]));
 
@@ -483,7 +469,7 @@ void mouseMotion(int x, int y)
 
     set_trackball_vector(x, y, curPos);
 
-    if (trackingMouse)
+    if (trackballMove)
     {
         dx = curPos[0] - lastPos[0];
         dy = curPos[1] - lastPos[1];
@@ -520,10 +506,7 @@ void reshape(int w, int h)
 void idle(void)
 {
 
-    if (redrawContinue)
-    {
-        glutPostRedisplay();
-    }
+    glutPostRedisplay();
 }
 
 int main(int argc, char **argv)
