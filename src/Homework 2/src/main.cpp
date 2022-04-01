@@ -1,4 +1,5 @@
 #include <vector>
+#include <algorithm>
 #include <set>
 
 #include "Angel.h"
@@ -333,11 +334,6 @@ namespace RubicsCubeContext
             glEnableVertexAttribArray(vColor);
             glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(points[i].size() * sizeof(point4)));
 
-            for (int cubeIdx : face_to_cube_set[static_cast<int>(FRONT)])
-            {
-                model_view_matrices[cubeIdx] *= RotateX(0.1);
-            }
-
             mat4 new_model_view = globalModelView * model_view_matrices[i];
 
             glUniformMatrix4fv(ModelView, 1, GL_TRUE, new_model_view);
@@ -436,6 +432,113 @@ void display(void)
 
 void keyboard(unsigned char key, int x, int y)
 {
+    if (key == 'F' || key == 'f')
+    {
+        std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
+        std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
+        std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
+        std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
+        std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
+
+        std::vector<int> front_top_intersec(RUBICS_CUBE_DIM);
+        std::vector<int> front_right_intersec(RUBICS_CUBE_DIM);
+        std::vector<int> front_bottom_intersec(RUBICS_CUBE_DIM);
+        std::vector<int> front_left_intersec(RUBICS_CUBE_DIM);
+
+        for (int cubeIdx : front)
+        {
+            RubicsCubeContext::model_view_matrices[cubeIdx] *= RotateX(90.0);
+        }
+
+        std::set_intersection(front.begin(), front.end(), top.begin(), top.end(), front_top_intersec.begin());
+        std::set_intersection(front.begin(), front.end(), right.begin(), right.end(), front_right_intersec.begin());
+        std::set_intersection(front.begin(), front.end(), bottom.begin(), bottom.end(), front_bottom_intersec.begin());
+        std::set_intersection(front.begin(), front.end(), left.begin(), left.end(), front_left_intersec.begin());
+
+        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+        {
+            printf("Erasing %d from top\n", front_top_intersec[idx]);
+            printf("Inserting %d to top\n", front_left_intersec[idx]);
+
+            top.erase(front_top_intersec[idx]);
+            top.insert(front_left_intersec[idx]);
+
+            right.erase(front_right_intersec[idx]);
+            right.insert(front_top_intersec[idx]);
+
+            bottom.erase(front_bottom_intersec[idx]);
+            bottom.insert(front_right_intersec[idx]);
+
+            left.erase(front_left_intersec[idx]);
+            left.insert(front_bottom_intersec[idx]);
+        }
+    }
+    else if (key == 'B' || key == 'b')
+    {
+        std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
+        std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
+        std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
+        std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
+        std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
+
+        std::vector<int> back_top_intersec(RUBICS_CUBE_DIM);
+        std::vector<int> back_right_intersec(RUBICS_CUBE_DIM);
+        std::vector<int> back_bottom_intersec(RUBICS_CUBE_DIM);
+        std::vector<int> back_left_intersec(RUBICS_CUBE_DIM);
+
+        for (int cubeIdx : back)
+        {
+            RubicsCubeContext::model_view_matrices[cubeIdx] *= RotateX(90.0);
+        }
+
+        std::set_intersection(back.begin(), back.end(), top.begin(), top.end(), back_top_intersec.begin());
+        std::set_intersection(back.begin(), back.end(), right.begin(), right.end(), back_right_intersec.begin());
+        std::set_intersection(back.begin(), back.end(), bottom.begin(), bottom.end(), back_bottom_intersec.begin());
+        std::set_intersection(back.begin(), back.end(), left.begin(), left.end(), back_left_intersec.begin());
+
+        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+        {
+            top.erase(back_top_intersec[idx]);
+            top.insert(back_left_intersec[idx]);
+
+            right.erase(back_right_intersec[idx]);
+            right.insert(back_top_intersec[idx]);
+
+            bottom.erase(back_bottom_intersec[idx]);
+            bottom.insert(back_right_intersec[idx]);
+
+            left.erase(back_left_intersec[idx]);
+            left.insert(back_bottom_intersec[idx]);
+        }
+    }
+    else if (key == 'U' || key == 'u')
+    {
+        for (int cubeIdx : RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)])
+        {
+            RubicsCubeContext::model_view_matrices[cubeIdx] *= RotateY(90.0);
+        }
+    }
+    else if (key == 'D' || key == 'd')
+    {
+        for (int cubeIdx : RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)])
+        {
+            RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(45.0);
+        }
+    }
+    else if (key == 'R' || key == 'r')
+    {
+        for (int cubeIdx : RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)])
+        {
+            RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(45.0);
+        }
+    }
+    else if (key == 'L' || key == 'l')
+    {
+        for (int cubeIdx : RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)])
+        {
+            RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(45.0);
+        }
+    }
 }
 
 //----------------------------------------------------------------------------
