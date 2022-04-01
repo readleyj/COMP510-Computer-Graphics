@@ -457,7 +457,8 @@ void keyboard(unsigned char key, int x, int y)
 void mouse(int button, int state, int x, int y)
 {
 
-    if (button == GLUT_MIDDLE_BUTTON)
+    if (button == GLUT_LEFT_BUTTON)
+    {
         switch (state)
         {
         case GLUT_DOWN:
@@ -467,6 +468,7 @@ void mouse(int button, int state, int x, int y)
             stopMotion(x, y);
             break;
         }
+    }
 }
 
 //----------------------------------------------------------------------------
