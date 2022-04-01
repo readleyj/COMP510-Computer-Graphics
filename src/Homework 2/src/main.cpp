@@ -176,17 +176,17 @@ namespace RubicsCubeContext
             points[cube_idx].resize(NUM_VERTICES_PER_CUBE);
             colors[cube_idx].resize(NUM_VERTICES_PER_CUBE);
 
-            int x_idx = cube_idx / (RUBICS_CUBE_DIM * RUBICS_CUBE_DIM);
+            int x_idx = cube_idx % RUBICS_CUBE_DIM;
             int y_idx = (cube_idx / RUBICS_CUBE_DIM) % RUBICS_CUBE_DIM;
-            int z_idx = cube_idx % RUBICS_CUBE_DIM;
+            int z_idx = cube_idx / (RUBICS_CUBE_DIM * RUBICS_CUBE_DIM);
 
             // Right Face
-            if (z_idx == (RUBICS_CUBE_DIM - 1))
+            if (x_idx == (RUBICS_CUBE_DIM - 1))
             {
                 face_to_cube_set[static_cast<int>(RIGHT)].insert(cube_idx);
             }
             // Left Face
-            else if (z_idx == 0)
+            else if (x_idx == 0)
             {
                 face_to_cube_set[static_cast<int>(LEFT)].insert(cube_idx);
             }
@@ -203,12 +203,12 @@ namespace RubicsCubeContext
             }
 
             // Back Face
-            if (x_idx == (RUBICS_CUBE_DIM - 1))
+            if (z_idx == (RUBICS_CUBE_DIM - 1))
             {
                 face_to_cube_set[static_cast<int>(BACK)].insert(cube_idx);
             }
             // Front Face
-            else if (x_idx == 0)
+            else if (z_idx == 0)
             {
                 face_to_cube_set[static_cast<int>(FRONT)].insert(cube_idx);
             }
