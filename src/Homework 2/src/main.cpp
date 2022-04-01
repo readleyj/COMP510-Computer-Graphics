@@ -488,18 +488,18 @@ void mouseMotion(int x, int y)
         dx = curPos[0] - lastPos[0];
         dy = curPos[1] - lastPos[1];
         dz = curPos[2] - lastPos[2];
-    }
 
-    if (dx || dy || dz)
-    {
-        angle = 90.0 * sqrt(dx * dx + dy * dy + dz * dz);
-        axis[0] = lastPos[1] * curPos[2] - lastPos[2] * curPos[1];
-        axis[1] = lastPos[2] * curPos[0] - lastPos[0] * curPos[2];
-        axis[2] = lastPos[0] * curPos[1] - lastPos[1] * curPos[0];
+        if (dx || dy || dz)
+        {
+            angle = 90.0 * sqrt(dx * dx + dy * dy + dz * dz);
+            axis[0] = lastPos[1] * curPos[2] - lastPos[2] * curPos[1];
+            axis[1] = lastPos[2] * curPos[0] - lastPos[0] * curPos[2];
+            axis[2] = lastPos[0] * curPos[1] - lastPos[1] * curPos[0];
 
-        lastPos[0] = curPos[0];
-        lastPos[1] = curPos[1];
-        lastPos[2] = curPos[2];
+            lastPos[0] = curPos[0];
+            lastPos[1] = curPos[1];
+            lastPos[2] = curPos[2];
+        }
     }
 
     glutPostRedisplay();
