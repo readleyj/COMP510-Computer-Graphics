@@ -1,6 +1,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <string>
 
 #include "Angel.h"
 
@@ -80,70 +81,6 @@ enum FacePosition
 
 // Model-view and projection matrices uniform location
 GLuint ModelView, Projection;
-
-float radians(float degrees)
-{
-    return degrees * M_PI / 180.0;
-}
-
-mat4 rotate(float angle, vec3 axis)
-{
-    vec3 v = normalize(axis);
-
-    float x = v[0];
-    float y = v[1];
-    float z = v[2];
-
-    float c = cos(radians(angle));
-    float omc = 1.0 - c;
-    float s = sin(radians(angle));
-
-    mat4 result = mat4(
-        vec4(x * x * omc + c, x * y * omc - z * s, x * z * omc + y * s, 0.0),
-        vec4(x * y * omc + z * s, y * y * omc + c, y * z * omc - x * s, 0.0),
-        vec4(x * z * omc - y * s, y * z * omc + x * s, z * z * omc + c, 0.0),
-        vec4());
-
-    return result;
-}
-
-void set_trackball_vector(int x, int y, float v[3])
-{
-    float d;
-    float a;
-
-    v[0] = (2.0 * x - curWidth) / curWidth;
-    v[1] = (curHeight - 2.0F * y) / curHeight;
-
-    d = sqrt(v[0] * v[0] + v[1] * v[1]);
-
-    v[2] = cos((M_PI / 2.0) * ((d < 1.0) ? d : 1.0));
-
-    a = 1.0 / sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-
-    v[0] *= a;
-    v[1] *= a;
-    v[2] *= a;
-}
-
-void startMotion(int x, int y)
-{
-    startX = x;
-    startY = y;
-
-    curX = x;
-    curY = y;
-
-    set_trackball_vector(x, y, lastPos);
-
-    trackballMove = true;
-}
-
-void stopMotion(int x, int y)
-{
-    trackballMove = false;
-    angle = 0.0;
-}
 
 //----------------------------------------------------------------------------
 
@@ -383,6 +320,330 @@ namespace RubicsCubeContext
 
 //----------------------------------------------------------------------------
 
+float radians(float degrees)
+{
+    return degrees * M_PI / 180.0;
+}
+
+mat4 rotate(float angle, vec3 axis)
+{
+    vec3 v = normalize(axis);
+
+    float x = v[0];
+    float y = v[1];
+    float z = v[2];
+
+    float c = cos(radians(angle));
+    float omc = 1.0 - c;
+    float s = sin(radians(angle));
+
+    mat4 result = mat4(
+        vec4(x * x * omc + c, x * y * omc - z * s, x * z * omc + y * s, 0.0),
+        vec4(x * y * omc + z * s, y * y * omc + c, y * z * omc - x * s, 0.0),
+        vec4(x * z * omc - y * s, y * z * omc + x * s, z * z * omc + c, 0.0),
+        vec4());
+
+    return result;
+}
+
+void set_trackball_vector(int x, int y, float v[3])
+{
+    float d;
+    float a;
+
+    v[0] = (2.0 * x - curWidth) / curWidth;
+    v[1] = (curHeight - 2.0F * y) / curHeight;
+
+    d = sqrt(v[0] * v[0] + v[1] * v[1]);
+
+    v[2] = cos((M_PI / 2.0) * ((d < 1.0) ? d : 1.0));
+
+    a = 1.0 / sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+
+    v[0] *= a;
+    v[1] *= a;
+    v[2] *= a;
+}
+
+void startMotion(int x, int y)
+{
+    startX = x;
+    startY = y;
+
+    curX = x;
+    curY = y;
+
+    set_trackball_vector(x, y, lastPos);
+
+    trackballMove = true;
+}
+
+void stopMotion(int x, int y)
+{
+    trackballMove = false;
+    angle = 0.0;
+}
+
+//----------------------------------------------------------------------------
+
+// Parse rotation string and perform rotations
+// Upper-case characters denote clockwise rotation
+// Lower-case character denote counter-clockwise rotation
+// 'U' => Top face, 'D' => Bottom Face
+// 'R' => Right face, 'L' => Left Face
+// 'F' => Front face, 'B' => Back Face
+void performRotations(std::string rotationString)
+{
+    for (char rotationKey : rotationString)
+    {
+        bool rotateClockwise = std::isupper(rotationKey);
+        rotationKey = toupper(rotationKey);
+
+        if (rotationKey == 'F')
+        {
+            std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
+
+            std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
+            std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
+            std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
+            std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
+
+            std::vector<int> front_top_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> front_right_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> front_bottom_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> front_left_intersec(RUBICS_CUBE_DIM);
+
+            for (int cubeIdx : front)
+            {
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateX(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+            }
+
+            std::set_intersection(front.begin(), front.end(), top.begin(), top.end(), front_top_intersec.begin());
+            std::set_intersection(front.begin(), front.end(), right.begin(), right.end(), front_right_intersec.begin());
+            std::set_intersection(front.begin(), front.end(), bottom.begin(), bottom.end(), front_bottom_intersec.begin());
+            std::set_intersection(front.begin(), front.end(), left.begin(), left.end(), front_left_intersec.begin());
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                top.erase(front_top_intersec[idx]);
+                right.erase(front_right_intersec[idx]);
+                bottom.erase(front_bottom_intersec[idx]);
+                left.erase(front_left_intersec[idx]);
+            }
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                top.insert(front_left_intersec[idx]);
+                right.insert(front_top_intersec[idx]);
+                bottom.insert(front_right_intersec[idx]);
+                left.insert(front_bottom_intersec[idx]);
+            }
+        }
+        else if (rotationKey == 'B')
+        {
+            std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
+
+            std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
+            std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
+            std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
+            std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
+
+            std::vector<int> back_top_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> back_right_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> back_bottom_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> back_left_intersec(RUBICS_CUBE_DIM);
+
+            for (int cubeIdx : back)
+            {
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateX(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+            }
+
+            std::set_intersection(back.begin(), back.end(), top.begin(), top.end(), back_top_intersec.begin());
+            std::set_intersection(back.begin(), back.end(), right.begin(), right.end(), back_right_intersec.begin());
+            std::set_intersection(back.begin(), back.end(), bottom.begin(), bottom.end(), back_bottom_intersec.begin());
+            std::set_intersection(back.begin(), back.end(), left.begin(), left.end(), back_left_intersec.begin());
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                top.erase(back_top_intersec[idx]);
+                right.erase(back_right_intersec[idx]);
+                bottom.erase(back_bottom_intersec[idx]);
+                left.erase(back_left_intersec[idx]);
+            }
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                top.insert(back_left_intersec[idx]);
+                right.insert(back_top_intersec[idx]);
+                bottom.insert(back_right_intersec[idx]);
+                left.insert(back_bottom_intersec[idx]);
+            }
+        }
+        else if (rotationKey == 'U')
+        {
+            std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
+
+            std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
+            std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
+            std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
+            std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
+
+            std::vector<int> top_front_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> top_back_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> top_right_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> top_left_intersec(RUBICS_CUBE_DIM);
+
+            for (int cubeIdx : top)
+            {
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+            }
+
+            std::set_intersection(top.begin(), top.end(), front.begin(), front.end(), top_front_intersec.begin());
+            std::set_intersection(top.begin(), top.end(), back.begin(), back.end(), top_back_intersec.begin());
+            std::set_intersection(top.begin(), top.end(), right.begin(), right.end(), top_right_intersec.begin());
+            std::set_intersection(top.begin(), top.end(), left.begin(), left.end(), top_left_intersec.begin());
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                front.erase(top_front_intersec[idx]);
+                right.erase(top_right_intersec[idx]);
+                back.erase(top_back_intersec[idx]);
+                left.erase(top_left_intersec[idx]);
+            }
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                front.insert(top_left_intersec[idx]);
+                right.insert(top_front_intersec[idx]);
+                back.insert(top_right_intersec[idx]);
+                left.insert(top_back_intersec[idx]);
+            }
+        }
+        else if (rotationKey == 'D')
+        {
+            std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
+
+            std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
+            std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
+            std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
+            std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
+
+            std::vector<int> bottom_front_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> bottom_back_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> bottom_right_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> bottom_left_intersec(RUBICS_CUBE_DIM);
+
+            for (int cubeIdx : bottom)
+            {
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+            }
+
+            std::set_intersection(bottom.begin(), bottom.end(), front.begin(), front.end(), bottom_front_intersec.begin());
+            std::set_intersection(bottom.begin(), bottom.end(), back.begin(), back.end(), bottom_back_intersec.begin());
+            std::set_intersection(bottom.begin(), bottom.end(), right.begin(), right.end(), bottom_right_intersec.begin());
+            std::set_intersection(bottom.begin(), bottom.end(), left.begin(), left.end(), bottom_left_intersec.begin());
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                front.erase(bottom_front_intersec[idx]);
+                right.erase(bottom_right_intersec[idx]);
+                back.erase(bottom_back_intersec[idx]);
+                left.erase(bottom_left_intersec[idx]);
+            }
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                front.insert(bottom_left_intersec[idx]);
+                right.insert(bottom_front_intersec[idx]);
+                back.insert(bottom_right_intersec[idx]);
+                left.insert(bottom_back_intersec[idx]);
+            }
+        }
+        else if (rotationKey == 'R')
+        {
+            std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
+
+            std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
+            std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
+            std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
+            std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
+
+            std::vector<int> right_front_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> right_back_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> right_top_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> right_bottom_intersec(RUBICS_CUBE_DIM);
+
+            for (int cubeIdx : right)
+            {
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(-90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+            }
+
+            std::set_intersection(right.begin(), right.end(), front.begin(), front.end(), right_front_intersec.begin());
+            std::set_intersection(right.begin(), right.end(), back.begin(), back.end(), right_back_intersec.begin());
+            std::set_intersection(right.begin(), right.end(), top.begin(), top.end(), right_top_intersec.begin());
+            std::set_intersection(right.begin(), right.end(), bottom.begin(), bottom.end(), right_bottom_intersec.begin());
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                front.erase(right_front_intersec[idx]);
+                top.erase(right_top_intersec[idx]);
+                back.erase(right_back_intersec[idx]);
+                bottom.erase(right_bottom_intersec[idx]);
+            }
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                front.insert(right_bottom_intersec[idx]);
+                top.insert(right_front_intersec[idx]);
+                back.insert(right_top_intersec[idx]);
+                bottom.insert(right_back_intersec[idx]);
+            }
+        }
+        else if (rotationKey == 'L')
+        {
+            std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
+
+            std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
+            std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
+            std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
+            std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
+
+            std::vector<int> left_front_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> left_back_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> left_top_intersec(RUBICS_CUBE_DIM);
+            std::vector<int> left_bottom_intersec(RUBICS_CUBE_DIM);
+
+            for (int cubeIdx : left)
+            {
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(-90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+            }
+
+            std::set_intersection(left.begin(), left.end(), front.begin(), front.end(), left_front_intersec.begin());
+            std::set_intersection(left.begin(), left.end(), back.begin(), back.end(), left_back_intersec.begin());
+            std::set_intersection(left.begin(), left.end(), top.begin(), top.end(), left_top_intersec.begin());
+            std::set_intersection(left.begin(), left.end(), bottom.begin(), bottom.end(), left_bottom_intersec.begin());
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                front.erase(left_front_intersec[idx]);
+                top.erase(left_top_intersec[idx]);
+                back.erase(left_back_intersec[idx]);
+                bottom.erase(left_bottom_intersec[idx]);
+            }
+
+            for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
+            {
+                front.insert(left_bottom_intersec[idx]);
+                top.insert(left_front_intersec[idx]);
+                back.insert(left_top_intersec[idx]);
+                bottom.insert(left_back_intersec[idx]);
+            }
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
+
 // OpenGL initialization
 void init()
 {
@@ -437,245 +698,9 @@ void display(void)
 
 void keyboard(unsigned char key, int x, int y)
 {
-    if (key == 'F' || key == 'f')
+    if (key == 'R' || key == 'r')
     {
-        std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
-
-        std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
-        std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
-        std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
-        std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
-
-        std::vector<int> front_top_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> front_right_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> front_bottom_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> front_left_intersec(RUBICS_CUBE_DIM);
-
-        for (int cubeIdx : front)
-        {
-            RubicsCubeContext::model_view_matrices[cubeIdx] = RotateX(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
-        }
-
-        std::set_intersection(front.begin(), front.end(), top.begin(), top.end(), front_top_intersec.begin());
-        std::set_intersection(front.begin(), front.end(), right.begin(), right.end(), front_right_intersec.begin());
-        std::set_intersection(front.begin(), front.end(), bottom.begin(), bottom.end(), front_bottom_intersec.begin());
-        std::set_intersection(front.begin(), front.end(), left.begin(), left.end(), front_left_intersec.begin());
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            top.erase(front_top_intersec[idx]);
-            right.erase(front_right_intersec[idx]);
-            bottom.erase(front_bottom_intersec[idx]);
-            left.erase(front_left_intersec[idx]);
-        }
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            top.insert(front_left_intersec[idx]);
-            right.insert(front_top_intersec[idx]);
-            bottom.insert(front_right_intersec[idx]);
-            left.insert(front_bottom_intersec[idx]);
-        }
-    }
-    else if (key == 'B' || key == 'b')
-    {
-        std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
-
-        std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
-        std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
-        std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
-        std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
-
-        std::vector<int> back_top_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> back_right_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> back_bottom_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> back_left_intersec(RUBICS_CUBE_DIM);
-
-        for (int cubeIdx : back)
-        {
-            RubicsCubeContext::model_view_matrices[cubeIdx] = RotateX(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
-        }
-
-        std::set_intersection(back.begin(), back.end(), top.begin(), top.end(), back_top_intersec.begin());
-        std::set_intersection(back.begin(), back.end(), right.begin(), right.end(), back_right_intersec.begin());
-        std::set_intersection(back.begin(), back.end(), bottom.begin(), bottom.end(), back_bottom_intersec.begin());
-        std::set_intersection(back.begin(), back.end(), left.begin(), left.end(), back_left_intersec.begin());
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            top.erase(back_top_intersec[idx]);
-            right.erase(back_right_intersec[idx]);
-            bottom.erase(back_bottom_intersec[idx]);
-            left.erase(back_left_intersec[idx]);
-        }
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            top.insert(back_left_intersec[idx]);
-            right.insert(back_top_intersec[idx]);
-            bottom.insert(back_right_intersec[idx]);
-            left.insert(back_bottom_intersec[idx]);
-        }
-    }
-    else if (key == 'U' || key == 'u')
-    {
-        std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
-
-        std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
-        std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
-        std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
-        std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
-
-        std::vector<int> top_front_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> top_back_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> top_right_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> top_left_intersec(RUBICS_CUBE_DIM);
-
-        for (int cubeIdx : top)
-        {
-            RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
-        }
-
-        std::set_intersection(top.begin(), top.end(), front.begin(), front.end(), top_front_intersec.begin());
-        std::set_intersection(top.begin(), top.end(), back.begin(), back.end(), top_back_intersec.begin());
-        std::set_intersection(top.begin(), top.end(), right.begin(), right.end(), top_right_intersec.begin());
-        std::set_intersection(top.begin(), top.end(), left.begin(), left.end(), top_left_intersec.begin());
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            front.erase(top_front_intersec[idx]);
-            right.erase(top_right_intersec[idx]);
-            back.erase(top_back_intersec[idx]);
-            left.erase(top_left_intersec[idx]);
-        }
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            front.insert(top_left_intersec[idx]);
-            right.insert(top_front_intersec[idx]);
-            back.insert(top_right_intersec[idx]);
-            left.insert(top_back_intersec[idx]);
-        }
-    }
-    else if (key == 'D' || key == 'd')
-    {
-        std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
-
-        std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
-        std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
-        std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
-        std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
-
-        std::vector<int> bottom_front_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> bottom_back_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> bottom_right_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> bottom_left_intersec(RUBICS_CUBE_DIM);
-
-        for (int cubeIdx : bottom)
-        {
-            RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
-        }
-
-        std::set_intersection(bottom.begin(), bottom.end(), front.begin(), front.end(), bottom_front_intersec.begin());
-        std::set_intersection(bottom.begin(), bottom.end(), back.begin(), back.end(), bottom_back_intersec.begin());
-        std::set_intersection(bottom.begin(), bottom.end(), right.begin(), right.end(), bottom_right_intersec.begin());
-        std::set_intersection(bottom.begin(), bottom.end(), left.begin(), left.end(), bottom_left_intersec.begin());
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            front.erase(bottom_front_intersec[idx]);
-            right.erase(bottom_right_intersec[idx]);
-            back.erase(bottom_back_intersec[idx]);
-            left.erase(bottom_left_intersec[idx]);
-        }
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            front.insert(bottom_left_intersec[idx]);
-            right.insert(bottom_front_intersec[idx]);
-            back.insert(bottom_right_intersec[idx]);
-            left.insert(bottom_back_intersec[idx]);
-        }
-    }
-    else if (key == 'R' || key == 'r')
-    {
-        std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
-
-        std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
-        std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
-        std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
-        std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
-
-        std::vector<int> right_front_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> right_back_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> right_top_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> right_bottom_intersec(RUBICS_CUBE_DIM);
-
-        for (int cubeIdx : right)
-        {
-            RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(-90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
-        }
-
-        std::set_intersection(right.begin(), right.end(), front.begin(), front.end(), right_front_intersec.begin());
-        std::set_intersection(right.begin(), right.end(), back.begin(), back.end(), right_back_intersec.begin());
-        std::set_intersection(right.begin(), right.end(), top.begin(), top.end(), right_top_intersec.begin());
-        std::set_intersection(right.begin(), right.end(), bottom.begin(), bottom.end(), right_bottom_intersec.begin());
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            front.erase(right_front_intersec[idx]);
-            top.erase(right_top_intersec[idx]);
-            back.erase(right_back_intersec[idx]);
-            bottom.erase(right_bottom_intersec[idx]);
-        }
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            front.insert(right_bottom_intersec[idx]);
-            top.insert(right_front_intersec[idx]);
-            back.insert(right_top_intersec[idx]);
-            bottom.insert(right_back_intersec[idx]);
-        }
-    }
-    else if (key == 'L' || key == 'l')
-    {
-        std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
-
-        std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
-        std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
-        std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
-        std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
-
-        std::vector<int> left_front_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> left_back_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> left_top_intersec(RUBICS_CUBE_DIM);
-        std::vector<int> left_bottom_intersec(RUBICS_CUBE_DIM);
-
-        for (int cubeIdx : left)
-        {
-            RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(-90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
-        }
-
-        std::set_intersection(left.begin(), left.end(), front.begin(), front.end(), left_front_intersec.begin());
-        std::set_intersection(left.begin(), left.end(), back.begin(), back.end(), left_back_intersec.begin());
-        std::set_intersection(left.begin(), left.end(), top.begin(), top.end(), left_top_intersec.begin());
-        std::set_intersection(left.begin(), left.end(), bottom.begin(), bottom.end(), left_bottom_intersec.begin());
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            front.erase(left_front_intersec[idx]);
-            top.erase(left_top_intersec[idx]);
-            back.erase(left_back_intersec[idx]);
-            bottom.erase(left_bottom_intersec[idx]);
-        }
-
-        for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
-        {
-            front.insert(left_bottom_intersec[idx]);
-            top.insert(left_front_intersec[idx]);
-            back.insert(left_top_intersec[idx]);
-            bottom.insert(left_back_intersec[idx]);
-        }
+        performRotations("FUDdLbUfrlU");
     }
 }
 
@@ -749,6 +774,8 @@ void idle(void)
 
     glutPostRedisplay();
 }
+
+//----------------------------------------------------------------------------
 
 int main(int argc, char **argv)
 {
