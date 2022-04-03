@@ -399,15 +399,15 @@ void performRotations(std::string rotationString)
         bool rotateClockwise = std::isupper(rotationKey);
         rotationKey = toupper(rotationKey);
 
+        std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
+        std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
+        std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
+        std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
+        std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
+        std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
+
         if (rotationKey == 'F')
         {
-            std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
-
-            std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
-            std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
-            std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
-            std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
-
             std::vector<int> front_top_intersec(RUBICS_CUBE_DIM);
             std::vector<int> front_right_intersec(RUBICS_CUBE_DIM);
             std::vector<int> front_bottom_intersec(RUBICS_CUBE_DIM);
@@ -441,13 +441,6 @@ void performRotations(std::string rotationString)
         }
         else if (rotationKey == 'B')
         {
-            std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
-
-            std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
-            std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
-            std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
-            std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
-
             std::vector<int> back_top_intersec(RUBICS_CUBE_DIM);
             std::vector<int> back_right_intersec(RUBICS_CUBE_DIM);
             std::vector<int> back_bottom_intersec(RUBICS_CUBE_DIM);
@@ -481,13 +474,6 @@ void performRotations(std::string rotationString)
         }
         else if (rotationKey == 'U')
         {
-            std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
-
-            std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
-            std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
-            std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
-            std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
-
             std::vector<int> top_front_intersec(RUBICS_CUBE_DIM);
             std::vector<int> top_back_intersec(RUBICS_CUBE_DIM);
             std::vector<int> top_right_intersec(RUBICS_CUBE_DIM);
@@ -521,13 +507,6 @@ void performRotations(std::string rotationString)
         }
         else if (rotationKey == 'D')
         {
-            std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
-
-            std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
-            std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
-            std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
-            std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
-
             std::vector<int> bottom_front_intersec(RUBICS_CUBE_DIM);
             std::vector<int> bottom_back_intersec(RUBICS_CUBE_DIM);
             std::vector<int> bottom_right_intersec(RUBICS_CUBE_DIM);
@@ -561,13 +540,6 @@ void performRotations(std::string rotationString)
         }
         else if (rotationKey == 'R')
         {
-            std::set<int> &right = RubicsCubeContext::face_to_cube_set[static_cast<int>(RIGHT)];
-
-            std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
-            std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
-            std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
-            std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
-
             std::vector<int> right_front_intersec(RUBICS_CUBE_DIM);
             std::vector<int> right_back_intersec(RUBICS_CUBE_DIM);
             std::vector<int> right_top_intersec(RUBICS_CUBE_DIM);
@@ -601,13 +573,6 @@ void performRotations(std::string rotationString)
         }
         else if (rotationKey == 'L')
         {
-            std::set<int> &left = RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)];
-
-            std::set<int> &front = RubicsCubeContext::face_to_cube_set[static_cast<int>(FRONT)];
-            std::set<int> &back = RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)];
-            std::set<int> &top = RubicsCubeContext::face_to_cube_set[static_cast<int>(TOP)];
-            std::set<int> &bottom = RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)];
-
             std::vector<int> left_front_intersec(RUBICS_CUBE_DIM);
             std::vector<int> left_back_intersec(RUBICS_CUBE_DIM);
             std::vector<int> left_top_intersec(RUBICS_CUBE_DIM);
