@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <set>
 #include <string>
+#include <random>
 
 #include "Angel.h"
 
@@ -13,6 +14,8 @@ GLuint PROGRAM;
 const int RUBICS_CUBE_DIM = 3;
 const int NUM_CUBES = RUBICS_CUBE_DIM * RUBICS_CUBE_DIM * RUBICS_CUBE_DIM;
 const int NUM_CUBE_FACES = 6;
+
+const int NUM_RANDOM_ROTATIONS = 10;
 
 const GLfloat CUBE_WIDTH = 0.45;
 const GLfloat CUBE_HEIGHT = 0.45;
@@ -386,6 +389,24 @@ void stopMotion(int x, int y)
 
 //----------------------------------------------------------------------------
 
+std::string generateRandomRotationString(int length)
+{
+    const std::string CHARACTERS = "UuDdFfBbRrLl";
+
+    std::random_device random_device;
+    std::mt19937 generator(random_device());
+    std::uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
+
+    std::string random_string;
+
+    for (std::size_t i = 0; i < length; ++i)
+    {
+        random_string += CHARACTERS[distribution(generator)];
+    }
+
+    return random_string;
+}
+
 // Parse rotation string and perform rotations
 // Upper-case characters denote clockwise rotation
 // Lower-case character denote counter-clockwise rotation
@@ -665,7 +686,9 @@ void keyboard(unsigned char key, int x, int y)
 {
     if (key == 'R' || key == 'r')
     {
-        performRotations("FUDdLbUfrlU");
+        std::string rotation_string = generateRandomRotationString(NUM_RANDOM_ROTATIONS);
+
+        performRotations(rotation_string);
     }
 }
 
