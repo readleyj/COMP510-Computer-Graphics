@@ -415,7 +415,7 @@ void performRotations(std::string rotationString)
 
             for (int cubeIdx : front)
             {
-                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateX(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateX(rotateClockwise ? 90.0 : -90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
             }
 
             std::set_intersection(front.begin(), front.end(), top.begin(), top.end(), front_top_intersec.begin());
@@ -433,10 +433,10 @@ void performRotations(std::string rotationString)
 
             for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
             {
-                top.insert(front_left_intersec[idx]);
-                right.insert(front_top_intersec[idx]);
-                bottom.insert(front_right_intersec[idx]);
-                left.insert(front_bottom_intersec[idx]);
+                top.insert(rotateClockwise ? front_left_intersec[idx] : front_right_intersec[idx]);
+                right.insert(rotateClockwise ? front_top_intersec[idx] : front_bottom_intersec[idx]);
+                bottom.insert(rotateClockwise ? front_right_intersec[idx] : front_left_intersec[idx]);
+                left.insert(rotateClockwise ? front_bottom_intersec[idx] : front_top_intersec[idx]);
             }
         }
         else if (rotationKey == 'B')
@@ -455,7 +455,7 @@ void performRotations(std::string rotationString)
 
             for (int cubeIdx : back)
             {
-                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateX(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateX(rotateClockwise ? 90.0 : -90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
             }
 
             std::set_intersection(back.begin(), back.end(), top.begin(), top.end(), back_top_intersec.begin());
@@ -473,10 +473,10 @@ void performRotations(std::string rotationString)
 
             for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
             {
-                top.insert(back_left_intersec[idx]);
-                right.insert(back_top_intersec[idx]);
-                bottom.insert(back_right_intersec[idx]);
-                left.insert(back_bottom_intersec[idx]);
+                top.insert(rotateClockwise ? back_left_intersec[idx] : back_right_intersec[idx]);
+                right.insert(rotateClockwise ? back_top_intersec[idx] : back_bottom_intersec[idx]);
+                bottom.insert(rotateClockwise ? back_right_intersec[idx] : back_left_intersec[idx]);
+                left.insert(rotateClockwise ? back_bottom_intersec[idx] : back_top_intersec[idx]);
             }
         }
         else if (rotationKey == 'U')
@@ -495,7 +495,7 @@ void performRotations(std::string rotationString)
 
             for (int cubeIdx : top)
             {
-                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(rotateClockwise ? 90.0 : -90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
             }
 
             std::set_intersection(top.begin(), top.end(), front.begin(), front.end(), top_front_intersec.begin());
@@ -513,10 +513,10 @@ void performRotations(std::string rotationString)
 
             for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
             {
-                front.insert(top_left_intersec[idx]);
-                right.insert(top_front_intersec[idx]);
-                back.insert(top_right_intersec[idx]);
-                left.insert(top_back_intersec[idx]);
+                front.insert(rotateClockwise ? top_left_intersec[idx] : top_right_intersec[idx]);
+                right.insert(rotateClockwise ? top_front_intersec[idx] : top_back_intersec[idx]);
+                back.insert(rotateClockwise ? top_right_intersec[idx] : top_left_intersec[idx]);
+                left.insert(rotateClockwise ? top_back_intersec[idx] : top_front_intersec[idx]);
             }
         }
         else if (rotationKey == 'D')
@@ -535,7 +535,7 @@ void performRotations(std::string rotationString)
 
             for (int cubeIdx : bottom)
             {
-                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(rotateClockwise ? 90.0 : -90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
             }
 
             std::set_intersection(bottom.begin(), bottom.end(), front.begin(), front.end(), bottom_front_intersec.begin());
@@ -553,10 +553,10 @@ void performRotations(std::string rotationString)
 
             for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
             {
-                front.insert(bottom_left_intersec[idx]);
-                right.insert(bottom_front_intersec[idx]);
-                back.insert(bottom_right_intersec[idx]);
-                left.insert(bottom_back_intersec[idx]);
+                front.insert(rotateClockwise ? bottom_left_intersec[idx] : bottom_right_intersec[idx]);
+                right.insert(rotateClockwise ? bottom_front_intersec[idx] : bottom_back_intersec[idx]);
+                back.insert(rotateClockwise ? bottom_right_intersec[idx] : bottom_left_intersec[idx]);
+                left.insert(rotateClockwise ? bottom_back_intersec[idx] : bottom_front_intersec[idx]);
             }
         }
         else if (rotationKey == 'R')
@@ -575,7 +575,7 @@ void performRotations(std::string rotationString)
 
             for (int cubeIdx : right)
             {
-                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(-90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(rotateClockwise ? -90.0 : 90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
             }
 
             std::set_intersection(right.begin(), right.end(), front.begin(), front.end(), right_front_intersec.begin());
@@ -593,10 +593,10 @@ void performRotations(std::string rotationString)
 
             for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
             {
-                front.insert(right_bottom_intersec[idx]);
-                top.insert(right_front_intersec[idx]);
-                back.insert(right_top_intersec[idx]);
-                bottom.insert(right_back_intersec[idx]);
+                front.insert(rotateClockwise ? right_bottom_intersec[idx] : right_top_intersec[idx]);
+                top.insert(rotateClockwise ? right_front_intersec[idx] : right_back_intersec[idx]);
+                back.insert(rotateClockwise ? right_top_intersec[idx] : right_bottom_intersec[idx]);
+                bottom.insert(rotateClockwise ? right_back_intersec[idx] : right_front_intersec[idx]);
             }
         }
         else if (rotationKey == 'L')
@@ -615,7 +615,7 @@ void performRotations(std::string rotationString)
 
             for (int cubeIdx : left)
             {
-                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(-90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(rotateClockwise ? -90.0 : 90.0) * RubicsCubeContext::model_view_matrices[cubeIdx];
             }
 
             std::set_intersection(left.begin(), left.end(), front.begin(), front.end(), left_front_intersec.begin());
@@ -633,10 +633,10 @@ void performRotations(std::string rotationString)
 
             for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
             {
-                front.insert(left_bottom_intersec[idx]);
-                top.insert(left_front_intersec[idx]);
-                back.insert(left_top_intersec[idx]);
-                bottom.insert(left_back_intersec[idx]);
+                front.insert(rotateClockwise ? left_bottom_intersec[idx] : left_top_intersec[idx]);
+                top.insert(rotateClockwise ? left_front_intersec[idx] : left_back_intersec[idx]);
+                back.insert(rotateClockwise ? left_top_intersec[idx] : left_bottom_intersec[idx]);
+                bottom.insert(rotateClockwise ? left_back_intersec[idx] : left_front_intersec[idx]);
             }
         }
     }
