@@ -698,6 +698,7 @@ void keyboard(unsigned char key, int x, int y)
 
 void mouse(int button, int state, int x, int y)
 {
+    bool activeShift = (glutGetModifiers() & GLUT_ACTIVE_SHIFT);
 
     if (button == GLUT_LEFT_BUTTON)
     {
@@ -726,43 +727,46 @@ void mouse(int button, int state, int x, int y)
         unsigned char pixel[4];
         glReadPixels(x, y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
 
-        std::string rotationKey;
-
-        printf("%d %d %d\n", pixel[0], pixel[1], pixel[2]);
+        char rotationKey;
 
         // White => Top Face is clicked
         if (pixel[0] == 255 && pixel[1] == 255 && pixel[2] == 255)
         {
-            rotationKey = "U";
+            rotationKey = 'U';
         }
         // Yellow => Bottom Face is clicked
         else if (pixel[0] == 255 && pixel[1] == 255 && pixel[2] == 0)
         {
-            rotationKey = "D";
+            rotationKey = 'D';
         }
         // Green => Front Face is clicked
         else if (pixel[0] == 0 && pixel[1] == 255 && pixel[2] == 0)
         {
-            rotationKey = "F";
+            rotationKey = 'F';
         }
         // Blue => Back Face is clicked
         else if (pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 255)
         {
-            rotationKey = "B";
+            rotationKey = 'B';
         }
         // Orange => Left Face is clicked
         else if (pixel[0] == 255 && pixel[1] == 128 && pixel[2] == 0)
         {
-            rotationKey = "L";
+            rotationKey = 'L';
         } // Red => Right Face is clicked
         else if (pixel[0] == 255 && pixel[1] == 0 && pixel[2] == 0)
         {
-            rotationKey = "R";
+            rotationKey = 'R';
         }
+
+        // If Shift is active, rotate counter-clock wise
+        rotationKey = activeShift ? tolower(rotationKey) : rotationKey;
+
+        std::string rotationString(1, rotationKey);
 
         isPickingOn = false;
 
-        performRotations(rotationKey);
+        performRotations(rotationString);
     }
 }
 
