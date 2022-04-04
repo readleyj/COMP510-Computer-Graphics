@@ -711,7 +711,7 @@ void mouse(int button, int state, int x, int y)
             break;
         }
     }
-    else if (button == GLUT_RIGHT_BUTTON || state == GLUT_DOWN)
+    else if (state == GLUT_DOWN && button == GLUT_RIGHT_BUTTON)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -726,9 +726,43 @@ void mouse(int button, int state, int x, int y)
         unsigned char pixel[4];
         glReadPixels(x, y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
 
+        std::string rotationKey;
+
         printf("%d %d %d\n", pixel[0], pixel[1], pixel[2]);
 
+        // White => Top Face is clicked
+        if (pixel[0] == 255 && pixel[1] == 255 && pixel[2] == 255)
+        {
+            rotationKey = "U";
+        }
+        // Yellow => Bottom Face is clicked
+        else if (pixel[0] == 255 && pixel[1] == 255 && pixel[2] == 0)
+        {
+            rotationKey = "D";
+        }
+        // Green => Front Face is clicked
+        else if (pixel[0] == 0 && pixel[1] == 255 && pixel[2] == 0)
+        {
+            rotationKey = "F";
+        }
+        // Blue => Back Face is clicked
+        else if (pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 255)
+        {
+            rotationKey = "B";
+        }
+        // Orange => Left Face is clicked
+        else if (pixel[0] == 255 && pixel[1] == 128 && pixel[2] == 0)
+        {
+            rotationKey = "L";
+        } // Red => Right Face is clicked
+        else if (pixel[0] == 255 && pixel[1] == 0 && pixel[2] == 0)
+        {
+            rotationKey = "R";
+        }
+
         isPickingOn = false;
+
+        performRotations(rotationKey);
     }
 }
 
