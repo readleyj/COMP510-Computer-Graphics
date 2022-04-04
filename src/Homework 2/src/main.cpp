@@ -11,6 +11,8 @@ typedef vec4 point4;
 
 GLuint PROGRAM;
 
+const std::string PRINT_DELIMITER = "------------------------------------------------------";
+
 const int RUBICS_CUBE_DIM = 3;
 const int NUM_CUBES = RUBICS_CUBE_DIM * RUBICS_CUBE_DIM * RUBICS_CUBE_DIM;
 const int NUM_CUBE_FACES = 6;
@@ -691,6 +693,16 @@ void keyboard(unsigned char key, int x, int y)
         std::string rotation_string = generateRandomRotationString(NUM_RANDOM_ROTATIONS);
 
         performRotations(rotation_string);
+    }
+    else if (key == 'H' | key == 'h')
+    {
+        std::cout << PRINT_DELIMITER << std::endl;
+        std::cout << "Press H => Print an overview of input commands" << std::endl;
+        std::cout << "Press R => Apply a random series of rotations" << std::endl;
+        std::cout << "Left-mouse click and hold => Activate trackball" << std::endl;
+        std::cout << "Right-mouse click on face => Rotate face clockwise by 90 degrees" << std::endl;
+        std::cout << "Right-mouse click on face + SHIFT => Rotate face counter-clockwise by 90 degrees" << std::endl;
+        std::cout << PRINT_DELIMITER << std::endl;
     }
 }
 
