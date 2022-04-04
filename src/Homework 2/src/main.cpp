@@ -942,14 +942,6 @@ void reshape(int w, int h)
 
 //----------------------------------------------------------------------------
 
-void idle(void)
-{
-
-    glutPostRedisplay();
-}
-
-//----------------------------------------------------------------------------
-
 int main(int argc, char **argv)
 {
     glutInit(&argc, argv);
@@ -967,7 +959,6 @@ int main(int argc, char **argv)
     glutMouseFunc(mouse);
     glutReshapeFunc(reshape);
     glutMotionFunc(mouseMotion);
-    glutIdleFunc(idle);
     glutTimerFunc(0, timer, 0);
 
     glutMainLoop();
