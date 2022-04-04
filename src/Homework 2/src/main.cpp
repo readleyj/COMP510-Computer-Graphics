@@ -524,10 +524,10 @@ void updateFaceIndices(char rotationKey)
 
         for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
         {
-            top.insert(rotateClockwise ? back_left_intersec[idx] : back_right_intersec[idx]);
-            right.insert(rotateClockwise ? back_top_intersec[idx] : back_bottom_intersec[idx]);
-            bottom.insert(rotateClockwise ? back_right_intersec[idx] : back_left_intersec[idx]);
-            left.insert(rotateClockwise ? back_bottom_intersec[idx] : back_top_intersec[idx]);
+            top.insert(rotateClockwise ? back_right_intersec[idx] : back_left_intersec[idx]);
+            right.insert(rotateClockwise ? back_bottom_intersec[idx] : back_top_intersec[idx]);
+            bottom.insert(rotateClockwise ? back_left_intersec[idx] : back_right_intersec[idx]);
+            left.insert(rotateClockwise ? back_top_intersec[idx] : back_bottom_intersec[idx]);
         }
     }
     else if (rotationKey == 'U')
@@ -580,10 +580,10 @@ void updateFaceIndices(char rotationKey)
 
         for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
         {
-            front.insert(rotateClockwise ? bottom_left_intersec[idx] : bottom_right_intersec[idx]);
-            right.insert(rotateClockwise ? bottom_front_intersec[idx] : bottom_back_intersec[idx]);
-            back.insert(rotateClockwise ? bottom_right_intersec[idx] : bottom_left_intersec[idx]);
-            left.insert(rotateClockwise ? bottom_back_intersec[idx] : bottom_front_intersec[idx]);
+            front.insert(rotateClockwise ? bottom_right_intersec[idx] : bottom_left_intersec[idx]);
+            right.insert(rotateClockwise ? bottom_back_intersec[idx] : bottom_front_intersec[idx]);
+            back.insert(rotateClockwise ? bottom_left_intersec[idx] : bottom_right_intersec[idx]);
+            left.insert(rotateClockwise ? bottom_front_intersec[idx] : bottom_back_intersec[idx]);
         }
     }
     else if (rotationKey == 'R')
@@ -636,10 +636,10 @@ void updateFaceIndices(char rotationKey)
 
         for (int idx = 0; idx < RUBICS_CUBE_DIM; idx++)
         {
-            front.insert(rotateClockwise ? left_bottom_intersec[idx] : left_top_intersec[idx]);
-            top.insert(rotateClockwise ? left_front_intersec[idx] : left_back_intersec[idx]);
-            back.insert(rotateClockwise ? left_top_intersec[idx] : left_bottom_intersec[idx]);
-            bottom.insert(rotateClockwise ? left_back_intersec[idx] : left_front_intersec[idx]);
+            front.insert(rotateClockwise ? left_top_intersec[idx] : left_bottom_intersec[idx]);
+            top.insert(rotateClockwise ? left_back_intersec[idx] : left_front_intersec[idx]);
+            back.insert(rotateClockwise ? left_bottom_intersec[idx] : left_top_intersec[idx]);
+            bottom.insert(rotateClockwise ? left_front_intersec[idx] : left_back_intersec[idx]);
         }
     }
 }
@@ -700,9 +700,9 @@ void timer(int value)
 
             for (int cubeIdx : RubicsCubeContext::face_to_cube_set[static_cast<int>(BACK)])
             {
-                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateX(rotateFaceClockwise ? faceRotationIncrement : -faceRotationIncrement) * RubicsCubeContext::model_view_matrices[cubeIdx];
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateX(rotateFaceClockwise ? -faceRotationIncrement : faceRotationIncrement) * RubicsCubeContext::model_view_matrices[cubeIdx];
             }
-            faceRotationAngle += rotateFaceClockwise ? faceRotationIncrement : -faceRotationIncrement;
+            faceRotationAngle += rotateFaceClockwise ? -faceRotationIncrement : faceRotationIncrement;
         }
         else if (faceToRotate == RIGHT)
         {
@@ -721,10 +721,10 @@ void timer(int value)
 
             for (int cubeIdx : RubicsCubeContext::face_to_cube_set[static_cast<int>(LEFT)])
             {
-                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(rotateFaceClockwise ? -faceRotationIncrement : faceRotationIncrement) * RubicsCubeContext::model_view_matrices[cubeIdx];
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateZ(rotateFaceClockwise ? faceRotationIncrement : -faceRotationIncrement) * RubicsCubeContext::model_view_matrices[cubeIdx];
             }
 
-            faceRotationAngle += rotateFaceClockwise ? -faceRotationIncrement : faceRotationIncrement;
+            faceRotationAngle += rotateFaceClockwise ? faceRotationIncrement : -faceRotationIncrement;
         }
         else if (faceToRotate == TOP)
         {
@@ -743,10 +743,10 @@ void timer(int value)
 
             for (int cubeIdx : RubicsCubeContext::face_to_cube_set[static_cast<int>(BOTTOM)])
             {
-                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(rotateFaceClockwise ? faceRotationIncrement : -faceRotationIncrement) * RubicsCubeContext::model_view_matrices[cubeIdx];
+                RubicsCubeContext::model_view_matrices[cubeIdx] = RotateY(rotateFaceClockwise ? -faceRotationIncrement : faceRotationIncrement) * RubicsCubeContext::model_view_matrices[cubeIdx];
             }
 
-            faceRotationAngle += rotateFaceClockwise ? faceRotationIncrement : -faceRotationIncrement;
+            faceRotationAngle += rotateFaceClockwise ? -faceRotationIncrement : faceRotationIncrement;
         }
 
         if (abs(faceRotationAngle) >= 90.0)
