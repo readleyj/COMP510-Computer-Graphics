@@ -261,20 +261,15 @@ namespace RubicsCubeContext
         }
     }
 
-    void resetModelViewMatrices()
-    {
-        for (size_t i = 0; i < NUM_CUBES; i++)
-        {
-            model_view_matrices[i] = mat4();
-        }
-    }
-
     void init()
     {
         glGenBuffers(NUM_CUBES, vertex_buffers);
         glGenVertexArrays(NUM_CUBES, vaos);
 
-        resetModelViewMatrices();
+        for (size_t i = 0; i < NUM_CUBES; i++)
+        {
+            model_view_matrices[i] = mat4();
+        }
 
         loadData();
     }
