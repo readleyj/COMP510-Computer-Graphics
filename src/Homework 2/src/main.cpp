@@ -85,6 +85,8 @@ enum FacePosition
 // Model-view and projection matrices uniform location
 GLuint ModelView, Projection;
 
+bool isPickingOn = false;
+
 //----------------------------------------------------------------------------
 
 namespace RubicsCubeContext
@@ -279,7 +281,7 @@ namespace RubicsCubeContext
             glEnableVertexAttribArray(vColor);
             glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(points[i].size() * sizeof(point4)));
 
-            mat4 new_model_view = globalModelView * model_view_matrices[i];
+            mat4 new_model_view = !isPickingOn ? globalModelView * model_view_matrices[i] : globalModelView;
 
             glUniformMatrix4fv(ModelView, 1, GL_TRUE, new_model_view);
 
@@ -708,6 +710,25 @@ void mouse(int button, int state, int x, int y)
             stopMotion(x, y);
             break;
         }
+    }
+    else if (button == GLUT_RIGHT_BUTTON || state == GLUT_DOWN)
+    {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        isPickingOn = true;
+
+        RubicsCubeContext::render();
+
+        glFlush();
+
+        y = glutGet(GLUT_WINDOW_HEIGHT) - y;
+
+        unsigned char pixel[4];
+        glReadPixels(x, y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
+
+        printf("%d %d %d\n", pixel[0], pixel[1], pixel[2]);
+
+        isPickingOn = false;
     }
 }
 
