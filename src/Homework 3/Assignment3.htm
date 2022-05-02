@@ -1,0 +1,316 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="Content-Language" content="tr">
+    <meta name="GENERATOR" content="Microsoft FrontPage 6.0">
+    <meta name="ProgId" content="FrontPage.Editor.Document">
+    <meta http-equiv="Content-Type" content="text/html;
+      charset=windows-1254">
+    <title>New Page 1</title>
+  </head>
+  <body>
+    <p style="margin-top: 0pt; margin-bottom: 3px; color: rgb(15, 1, 3);
+      font-weight: bold; text-align: left;"> <font size="4" face="Comic
+        Sans MS">COMP 410/510, Programming Assignment #3</font></p>
+    <div style="text-align: left;"> </div>
+    <p style="margin-top: 0pt; margin-bottom: 3px; color: rgb(15, 1, 3);
+      font-weight: bold; text-align: left;"> <font size="4" face="Comic
+        Sans MS">Shading and </font><font size="4" face="Comic Sans MS">Texture
+        Mapping<br>
+      </font></p>
+    <div style="text-align: left;"> </div>
+    <p style="margin-top: 0pt; margin-bottom: 3px; color: rgb(15, 1, 3);
+      font-weight: bold; text-align: left;"> <font size="4" face="Comic
+        Sans MS">Due Date: 20 May 2022</font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;">&nbsp;</p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS">You will write an OpenGL program built upon
+        your first homework assignment. You will basically extend the
+        first version with shading and texture mapping capabilities. You
+        are also expected to complete the missing parts of your first
+        homework and correct it wherever necessary. Your homework will
+        mainly be graded based on the newly added functionalities.&nbsp;</font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;">&nbsp;</p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS">You are required to submit only the source
+        files, i.e., the project files in a zip file, ready to be
+        compiled and run (<span style="font-weight: bold;">no</span> exe
+        files). Please try to comply with the announced due date. You
+        need to upload your code to Blackboard. </font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;">&nbsp;</p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><b><font face="Comic
+          Sans MS">Program Requirements</font></b></p>
+    <span style="font-family: Comic Sans MS;"><span style="font-weight:
+        bold;"><br>
+      </span></span>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"><b>1. General</b></font></p>
+    <ul>
+      <li><font size="2" face="Comic Sans MS">All requirements of HW1
+          assignment are also valid in this assignment.</font>&nbsp; <font
+          size="2" face="Comic Sans MS"><br>
+        </font></li>
+      <li><font size="2" face="Comic Sans MS">You can ignore the cube
+          object and work only on the sphere that you created
+          previously.</font></li>
+      <li><font size="2" face="Comic Sans MS">Use <span
+            style="font-weight: bold;">perspective</span> projection.</font></li>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">Use shader-based OpenGL and no
+            deprecated functionality except GLUT.</font></p>
+      </li>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">Provide documentation in the source
+            code, and explain </font><font size="2" face="Comic Sans
+            MS">clearly </font><font size="2" face="Comic Sans MS">what
+            you do at every step.<br>
+          </font></p>
+      </li>
+    </ul>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"><b>2. User interface</b></font></p>
+    <ul>
+      <li><font size="2" face="Comic Sans MS">Use <b>glut pop-up menu
+            library</b> (attached to the right botton of the mouse) to
+          toggle between various options of rendering as indicated below
+          (for shading and texture mapping).</font></li>
+    </ul>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"><b>3. Shading</b></font></p>
+    <ul>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">Use only one <span style="font-weight:
+              bold;">directional light source</span>. (You can try point
+            light source as well).<br>
+          </font></p>
+      </li>
+      <li><font size="2" face="Comic Sans MS">The user should be able to
+          switch between <span style="font-weight: bold;">Gouraud</span>
+          and <span style="font-weight: bold;">Phong</span><b> shading
+          </b>options </font><font size="2" face="Comic Sans MS">
+          (pop-up menu item)</font><font size="2" face="Comic Sans MS">.
+          <br>
+        </font></li>
+      <li><font size="2" face="Comic Sans MS">Implement&nbsp;<span
+            style="font-weight: bold;"></span><span style="font-weight:
+            bold;">modified-Phong</span> illumination model to be used
+          while shading </font><font size="2" face="Comic Sans MS"> </font><font
+          size="2" face="Comic Sans MS"> (pop-up menu item)</font><font
+          size="2" face="Comic Sans MS">. <br>
+        </font></li>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">The user should be able to turn off the
+            <span style="font-weight: bold;">specular</span>, <span
+              style="font-weight: bold;">diffuse</span> and <span
+              style="font-weight: bold;">ambient</span> components one
+            by one when desired </font><font size="2" face="Comic Sans
+            MS"> (pop-up menu item)</font><font size="2" face="Comic
+            Sans MS">.</font></p>
+      </li>
+      <li><font size="2" face="Comic Sans MS">The user should be able to
+          keep the light source <span style="font-weight: bold;">fixed
+            in position or move</span> with the object (</font><font
+          size="2" face="Comic Sans MS">pop-up menu item</font><font
+          size="2" face="Comic Sans MS">).<br>
+        </font></li>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">Define at least two options for
+            material properties: either <span style="font-weight:
+              bold;">plastic</span> or <span style="font-weight: bold;">metallic</span></font><font
+            size="2" face="Comic Sans MS"><span style="font-weight:
+              bold;"> </span>(</font><font size="2" face="Comic Sans
+            MS">pop-up menu item</font><font size="2" face="Comic Sans
+            MS">). Check <a
+              href="http://www.cs.toronto.edu/%7Ejacobson/phong-demo/">this
+
+              site</a> to see what happens with different settings.<br>
+          </font></p>
+      </li>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">Enable <b>depth test</b></font><font
+            size="2" face="Comic Sans MS">.</font> <br>
+        </p>
+      </li>
+      <li><font size="2" face="Comic Sans MS">Enable <b>culling </b></font><font
+          size="2" face="Comic Sans MS">to avoid rendering triangles
+          facing away from the viewer. See texture mapping slides.</font>
+      </li>
+    </ul>
+    <font size="2" face="Comic Sans MS"><b>Hints:</b></font>
+    <ul>
+      <li><font size="2" face="Comic Sans MS">Note that the <span
+            style="font-weight: bold;">vertex normals</span> are easy to
+          determine in the case of a sphere (given simply by the
+          normalized vector between the vertex and the center of the
+          sphere).</font></li>
+      <li><font size="2" face="Comic Sans MS">For culling, use
+          glEnable(GL_CULL_FACE) to avoid rendering triangles facing
+          away from the viewer.</font></li>
+      <li><font size="2" face="Comic Sans MS">Light sources remain fixed
+          in position or move with the object, depending on whether the
+          light direction vector is transformed into camera coordinates
+          or not.</font></li>
+      <li><font size="2" face="Comic Sans MS">Use shineness coefficient
+          to define "plastic" and "metallic" looking surfaces. See
+          lecture slides and also try different values to get what you
+          want.</font></li>
+    </ul>
+    <br>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"><b>4. Texture Mapping</b></font></p>
+    <ul>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">You will use the ppm images (given
+            below) as 2D texture images to map on the sphere object. The
+            user should be able to toggle between different images.</font></p>
+      </li>
+      <li><font size="2" face="Comic Sans MS">Use parametrization of the
+          sphere to assign texture coordinates (as explained in the
+          lecture slides).<br>
+        </font></li>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">Try different parameters for texturing
+            via <span style="font-weight: bold;">glTexParameter</span>
+            function and use the best combination to obtain the best
+            quality. Use <b>mipmapping</b>.</font></p>
+      </li>
+    </ul>
+    <font size="2" face="Comic Sans MS"><b><br>
+        Hints:</b></font>
+    <ul>
+      <li><font size="2" face="Comic Sans MS">You have to assign a
+          texture coordinate (s,t) to every vertex (x,y,z) of the sphere
+          model. You will do this by using parametrization of the
+          sphere, that is, by mapping first from st-space to uv-space
+          and then to xyz coordinates.</font></li>
+      <li><font size="2" face="Comic Sans MS">Use <span
+            style="font-weight: bold;">glBindTexture</span> function to
+          define texture objects and to toggle between.</font></li>
+      <li><font size="2" face="Comic Sans MS">Note that the smoothness
+          of your rendering will depend on the resolution of the sphere
+          model (which you can control by adjusting the number of
+          recursions if you're using the subdivison approach).</font></li>
+      <li><font size="2" face="Comic Sans MS">You can try <span
+            style="font-weight: bold;">zooming</span> (by scaling) to
+          better visualize textures in more detail.<br>
+        </font></li>
+    </ul>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"><b><br>
+        </b></font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"><b>5. Display mode</b></font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS">Three different modes should be left to the
+        choice of the user (pop-up menu item):</font></p>
+    <ul>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">Wireframe </font></p>
+      </li>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">Shading</font></p>
+      </li>
+      <li>
+        <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+            face="Comic Sans MS">Texture</font></p>
+      </li>
+    </ul>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"> Initial default mode should be&nbsp;<i>shading</i>.
+        <br>
+      </font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS">Use uniform variables to control the
+        operations in the shader, as sent from the main program. </font>
+    </p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;">&nbsp;</p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"><b>6. Input Files</b></font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS">You will need texture images for the 2D
+        texture mapping part of the assignment. Here you are given two
+        such images that you can map using spherical parametrization:
+        earth.ppm (<a href="earth.ppm.zip">zipped version</a>) and <a
+          href="basketball.ppm">basketball.ppm</a>. These two files are
+        in ppm format, can be visualized using Photoshop like software.
+        However, since OpenGL does not provide any image loader, you
+        will need to implement your own loader. Below you will find
+        explanation of a ppm file and how to load it.</font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;">&nbsp;</p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"> <font size="2"
+        color="#ff0000" face="Comic Sans MS">PPM file:</font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"> This is an ascii ppm file that stores the
+        texture image information as follows (you can view content of
+        the files with a text editor):</font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;">&nbsp;</p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"> <font size="2"
+        color="#008000" face="Comic Sans MS">P3</font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"> <font size="2"
+        color="#008000" face="Comic Sans MS">#comments </font><font
+        size="2" face="Comic Sans MS">(if there are any)</font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"><font color="#008000">width&nbsp; height </font>(integers)<font
+          color="#008000">&nbsp; max_level </font>(byte)</font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"><font color="#008000">array of RGB values </font>(bytes)</font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;">&nbsp;</p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS"> See the following pdf file about how to
+        read contents of a PPM file: <a href="readppm.pdf">readppm.pdf</a></font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;">&nbsp;</p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><b> <font size="2"
+          face="Comic Sans MS">Bonus (+10 points)</font></b><font
+        size="2" face="Comic Sans MS"><b>: </b>Implementation of the
+        shadow of the bouncing ball, as described in lecture slides. The
+        shadow, when enabled, should be rendered on a plane, supposedly
+        on the floor. This functionality can be invoked from a pop-up
+        menu item. <br>
+      </font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><b><font size="2"
+          face="Comic Sans MS">Bonus (+10 points)</font></b><font
+        size="2" face="Comic Sans MS"><b>: </b>Implementation of 1D
+        texture mapping. This will appear on the menu as an additional
+        texture mapping option that the user can choose to map a
+        synthetical 1D texture on the sphere object, in a similar way
+        explained in the lecture slides. You can use the 1D texture (or
+        a similar one) shown in the </font><font size="2" face="Comic
+        Sans MS"><a href="lecture08_1DTextureMapping.pdf">slide</a></font><font
+        size="2" face="Comic Sans MS">, which is basically a row of
+        pixels in two different colors so as to make a pattern. You
+        should choose an appropriate size for the 1D texture image
+        (i.e., the total number of pixels) and an appropriate pixel
+        width for the "red" line patterns. Specify a plane (in world
+        coordinates), and then generate a s-texture coordinate of each
+        vertex, based upon its distance from the plane. Your texture
+        display should look like the textured teapot given in the slide.</font><br>
+      <font size="2" face="Comic Sans MS"><b> <font size="2"
+            face="Comic Sans MS">Bonus (+10 points)</font></b><font
+          size="2" face="Comic Sans MS"><b>: </b>Use also <b>Bunny</b>
+          model from the first homework (only for shading not for
+          texture mapping). In this case you will need to compute the
+          normal vectors at the vertices.</font><span
+          style="font-weight: bold;"> </span></font></p>
+    <br>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><font size="2"
+        face="Comic Sans MS">Have fun!<br>
+      </font></p>
+    <p style="margin-top: 0pt; margin-bottom: 3px;"><br>
+      <font size="2" face="Comic Sans MS"><span style="font-weight:
+          bold;"></span></font></p>
+    <span style="font-family: Comic Sans MS;"><span style="font-weight:
+        bold;"></span></span>
+    <p style="margin-top: 0pt; margin-bottom: 3px;">&nbsp;</p>
+  </body>
+</html>
