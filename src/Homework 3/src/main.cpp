@@ -45,6 +45,9 @@ GLfloat frontWallBoundary = -zNear;
 int curWidth;
 int curHeight;
 
+int window;
+int menu_id;
+
 color4 VERTEX_COLORS[8] = {
     color4(0.0, 0.0, 0.0, 1.0), // black
     color4(1.0, 0.0, 0.0, 1.0), // red
@@ -95,6 +98,7 @@ enum ShadingMode
 BallShape curBallShape = SPHERE;
 DrawMode curDrawMode = SOLID;
 DrawColor curDrawColor = COLORFUL;
+ShadingMode curShadeMode = GOURAUD;
 
 // Allocate space for NUM_SHAPES VAOs and 1 more for the room / walls
 GLuint vao[NUM_SHAPES + 1];
@@ -112,8 +116,6 @@ namespace cubeContext
     GLuint buffer;
 
     const int NumVertices = 36;
-
-    ShadingMode shadeMode = GOURAUD;
 
     point4 points[NumVertices];
     vec3 normals[NumVertices];
@@ -264,8 +266,6 @@ namespace sphereContext
     const int NumTriangles = 4096;
     const int NumVertices = 3 * NumTriangles;
 
-    ShadingMode shadeMode = GOURAUD;
-
     point4 points[NumVertices];
     vec3 normals[NumVertices];
 
@@ -364,7 +364,12 @@ namespace bunnyContext
 
 namespace LightInfo
 {
-    point4 light_position(0.0, 0.0, -1.0, 0.0);
+    // Point light source
+    // point4 light_position(1.0, 1.0, 0.0, 1.0);
+
+    // Directional light source
+    point4 light_position(1.0, 1.0, 0.0, 0.0);
+
     color4 light_ambient(0.2, 0.2, 0.2, 1.0);
     color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
     color4 light_specular(1.0, 1.0, 1.0, 1.0);
@@ -448,6 +453,56 @@ void loadModel(std::string path, std::vector<point4> *points)
     }
 }
 
+void menu(int num)
+{
+    if (num == 0)
+    {
+        glutDestroyWindow(window);
+        exit(0);
+    }
+    else if (num == 1)
+    {
+        curShadeMode = GOURAUD;
+    }
+    else if (num == 2)
+    {
+        curShadeMode = PHONG;
+    }
+    else if (num == 3)
+    {
+    }
+
+    glutPostRedisplay();
+}
+
+void createMenu(void)
+{
+    int shading_mode_submenu = glutCreateMenu(menu);
+    glutAddMenuEntry("Gouraud", 1);
+    glutAddMenuEntry("Phong", 2);
+
+    int material_type_submenu = glutCreateMenu(menu);
+    glutAddMenuEntry("Plastic", 3);
+    glutAddMenuEntry("Silver", 4);
+    glutAddMenuEntry("Ruby", 5);
+    glutAddMenuEntry("Emerald", 6);
+    glutAddMenuEntry("Rubber", 7);
+
+    int display_mode_submenu = glutCreateMenu(menu);
+    glutAddMenuEntry("Wireframe", 3);
+    glutAddMenuEntry("Shading", 4);
+    glutAddMenuEntry("Texture", 5);
+
+    menu_id = glutCreateMenu(menu);
+
+    glutAddSubMenu("Shading", shading_mode_submenu);
+    glutAddSubMenu("Material", material_type_submenu);
+    glutAddSubMenu("Display Mode", display_mode_submenu);
+    glutAddMenuEntry("Quit", 0);
+
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+}
+
 // For setting the projection matrix when toggling between 2D and 3D
 void setProjectionMatrix()
 {
@@ -529,7 +584,7 @@ void init()
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cubeContext::points), cubeContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeContext::points), sizeof(cubeContext::normals), cubeContext::normals);
 
-    glUniform1i(shadingModeLoc, static_cast<int>(cubeContext::shadeMode));
+    glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
 
     glUniform4fv(glGetUniformLocation(program, "AmbientProduct"),
                  1, LightInfo::ambient_product);
@@ -559,7 +614,7 @@ void init()
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sphereContext::points), sphereContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::normals), sphereContext::normals);
 
-    glUniform1i(shadingModeLoc, static_cast<int>(sphereContext::shadeMode));
+    glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
 
     glUniform4fv(glGetUniformLocation(program, "AmbientProduct"),
                  1, LightInfo::ambient_product);
@@ -604,7 +659,7 @@ void init()
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(wallsContext::points), wallsContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(wallsContext::points), sizeof(wallsContext::colors), wallsContext::colors);
 
-    glUniform1i(shadingModeLoc, static_cast<int>(sphereContext::shadeMode));
+    glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(wallsContext::points)));
@@ -647,13 +702,13 @@ void display(void)
     case CUBE:
         glBindVertexArray(vao[0]);
         glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
-        glUniform1i(shadingModeLoc, static_cast<int>(cubeContext::shadeMode));
+        glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
         glDrawArrays(GL_TRIANGLES, 0, cubeContext::NumVertices);
         break;
     case SPHERE:
         glBindVertexArray(vao[1]);
         glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
-        glUniform1i(shadingModeLoc, static_cast<int>(sphereContext::shadeMode));
+        glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
         glDrawArrays(GL_TRIANGLES, 0, sphereContext::NumVertices);
         break;
     case BUNNY:
@@ -873,6 +928,8 @@ int main(int argc, char **argv)
     glewInit();
 
     init();
+
+    createMenu();
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
