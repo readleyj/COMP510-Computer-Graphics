@@ -46,7 +46,7 @@ int curWidth;
 int curHeight;
 
 int window;
-int menu_id;
+GLuint PROGRAM;
 
 color4 VERTEX_COLORS[8] = {
     color4(0.0, 0.0, 0.0, 1.0), // black
@@ -95,10 +95,20 @@ enum ShadingMode
     PHONG
 };
 
+enum MaterialType
+{
+    PLASTIC,
+    SILVER,
+    RUBY,
+    JADE,
+    RUBBER
+};
+
 BallShape curBallShape = SPHERE;
 DrawMode curDrawMode = SOLID;
 DrawColor curDrawColor = COLORFUL;
 ShadingMode curShadeMode = GOURAUD;
+MaterialType curMaterialType = PLASTIC;
 
 // Allocate space for NUM_SHAPES VAOs and 1 more for the room / walls
 GLuint vao[NUM_SHAPES + 1];
@@ -373,16 +383,81 @@ namespace LightInfo
     color4 light_ambient(0.2, 0.2, 0.2, 1.0);
     color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
     color4 light_specular(1.0, 1.0, 1.0, 1.0);
+}
 
-    color4 material_ambient(1.0, 0.0, 1.0, 1.0);
-    color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
-    color4 material_specular(1.0, 0.8, 0.0, 1.0);
+namespace MaterialInfo
+{
+    color4 material_ambient;
+    color4 material_diffuse;
+    color4 material_specular;
 
     float material_shininess = 100.0;
 
-    color4 ambient_product = light_ambient * material_ambient;
-    color4 diffuse_product = light_diffuse * material_diffuse;
-    color4 specular_product = light_specular * material_specular;
+    color4 ambient_product;
+    color4 diffuse_product;
+    color4 specular_product;
+
+    //     PLASTIC,
+    //     SILVER,
+    //     RUBY,
+    //     EMERALD,
+    //     RUBBER
+
+    void updateMaterial()
+    {
+        if (curMaterialType == PLASTIC)
+        {
+            material_ambient = color4(0.0, 0.1, 0.06, 1.0);
+            material_diffuse = color4(0.0, 0.50980392, 0.50980392, 1.0);
+            material_specular = color4(0.50196078, 0.50196078, 0.50196078, 1.0);
+            material_shininess = 32.0;
+        }
+        else if (curMaterialType == SILVER)
+        {
+            material_ambient = color4(0.19225, 0.19225, 0.19225, 1.0);
+            material_diffuse = color4(0.50754, 0.50754, 0.50754, 1.0);
+            material_specular = color4(0.508273, 0.508273, 0.508273, 1.0);
+            material_shininess = 51.2;
+        }
+        else if (curMaterialType == RUBY)
+        {
+            material_ambient = color4(0.1745, 0.01175, 0.01175, 0.55);
+            material_diffuse = color4(0.61424, 0.04136, 0.04136, 0.55);
+            material_specular = color4(0.727811, 0.626959, 0.626959, 0.55);
+            material_shininess = 76.8;
+        }
+        else if (curMaterialType == JADE)
+        {
+            material_ambient = color4(0.135, 0.2225, 0.1575, 0.95);
+            material_diffuse = color4(0.54, 0.89, 0.63, 0.95);
+            material_specular = color4(0.316228, 0.316228, 0.316228, 0.95);
+            material_shininess = 12.8;
+        }
+        else if (curMaterialType == RUBBER)
+        {
+            material_ambient = color4(0.0, 0.05, 0.05, 1.0);
+            material_diffuse = color4(0.4, 0.5, 0.5, 1.0);
+            material_specular = color4(0.04, 0.7, 0.7, 1.0);
+            material_shininess = 10.0;
+        }
+
+        ambient_product = LightInfo::light_ambient * material_ambient;
+        diffuse_product = LightInfo::light_diffuse * material_diffuse;
+        specular_product = LightInfo::light_specular * material_specular;
+
+        glUniform4fv(glGetUniformLocation(PROGRAM, "AmbientProduct"),
+                     1, ambient_product);
+        glUniform4fv(glGetUniformLocation(PROGRAM, "DiffuseProduct"),
+                     1, diffuse_product);
+        glUniform4fv(glGetUniformLocation(PROGRAM, "SpecularProduct"),
+                     1, specular_product);
+
+        glUniform4fv(glGetUniformLocation(PROGRAM, "LightPosition"),
+                     1, LightInfo::light_position);
+
+        glUniform1f(glGetUniformLocation(PROGRAM, "Shininess"),
+                    material_shininess);
+    }
 }
 
 void loadModel(std::string path, std::vector<point4> *points)
@@ -470,6 +545,28 @@ void menu(int num)
     }
     else if (num == 3)
     {
+        curMaterialType = PLASTIC;
+        MaterialInfo::updateMaterial();
+    }
+    else if (num == 4)
+    {
+        curMaterialType = SILVER;
+        MaterialInfo::updateMaterial();
+    }
+    else if (num == 5)
+    {
+        curMaterialType = RUBY;
+        MaterialInfo::updateMaterial();
+    }
+    else if (num == 6)
+    {
+        curMaterialType = JADE;
+        MaterialInfo::updateMaterial();
+    }
+    else if (num == 7)
+    {
+        curMaterialType = RUBBER;
+        MaterialInfo::updateMaterial();
     }
 
     glutPostRedisplay();
@@ -485,7 +582,7 @@ void createMenu(void)
     glutAddMenuEntry("Plastic", 3);
     glutAddMenuEntry("Silver", 4);
     glutAddMenuEntry("Ruby", 5);
-    glutAddMenuEntry("Emerald", 6);
+    glutAddMenuEntry("Jade", 6);
     glutAddMenuEntry("Rubber", 7);
 
     int display_mode_submenu = glutCreateMenu(menu);
@@ -493,7 +590,7 @@ void createMenu(void)
     glutAddMenuEntry("Shading", 4);
     glutAddMenuEntry("Texture", 5);
 
-    menu_id = glutCreateMenu(menu);
+    int menu_id = glutCreateMenu(menu);
 
     glutAddSubMenu("Shading", shading_mode_submenu);
     glutAddSubMenu("Material", material_type_submenu);
@@ -554,17 +651,17 @@ void init()
     wallsContext::colorcube();
 
     // Load shaders and use the resulting shader program
-    GLuint program = InitShader("vshader.glsl", "fshader.glsl");
+    PROGRAM = InitShader("vshader.glsl", "fshader.glsl");
 
-    GLuint vPosition = glGetAttribLocation(program, "vPosition");
-    GLuint vColor = glGetAttribLocation(program, "vColor");
-    GLuint vNormal = glGetAttribLocation(program, "vNormal");
+    GLuint vPosition = glGetAttribLocation(PROGRAM, "vPosition");
+    GLuint vColor = glGetAttribLocation(PROGRAM, "vColor");
+    GLuint vNormal = glGetAttribLocation(PROGRAM, "vNormal");
 
     // Retrieve transformation uniform variable locations
-    ModelView = glGetUniformLocation(program, "ModelView");
-    Projection = glGetUniformLocation(program, "Projection");
+    ModelView = glGetUniformLocation(PROGRAM, "ModelView");
+    Projection = glGetUniformLocation(PROGRAM, "Projection");
 
-    shadingModeLoc = glGetUniformLocation(program, "ShadeMode");
+    shadingModeLoc = glGetUniformLocation(PROGRAM, "ShadeMode");
 
     mat4 projection;
     projection = Perspective(FOV, 1.0, zNear, zFar);
@@ -586,19 +683,6 @@ void init()
 
     glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
 
-    glUniform4fv(glGetUniformLocation(program, "AmbientProduct"),
-                 1, LightInfo::ambient_product);
-    glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"),
-                 1, LightInfo::diffuse_product);
-    glUniform4fv(glGetUniformLocation(program, "SpecularProduct"),
-                 1, LightInfo::specular_product);
-
-    glUniform4fv(glGetUniformLocation(program, "LightPosition"),
-                 1, LightInfo::light_position);
-
-    glUniform1f(glGetUniformLocation(program, "Shininess"),
-                LightInfo::material_shininess);
-
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(cubeContext::points)));
 
@@ -615,19 +699,6 @@ void init()
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::normals), sphereContext::normals);
 
     glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
-
-    glUniform4fv(glGetUniformLocation(program, "AmbientProduct"),
-                 1, LightInfo::ambient_product);
-    glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"),
-                 1, LightInfo::diffuse_product);
-    glUniform4fv(glGetUniformLocation(program, "SpecularProduct"),
-                 1, LightInfo::specular_product);
-
-    glUniform4fv(glGetUniformLocation(program, "LightPosition"),
-                 1, LightInfo::light_position);
-
-    glUniform1f(glGetUniformLocation(program, "Shininess"),
-                LightInfo::material_shininess);
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
@@ -664,8 +735,10 @@ void init()
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(wallsContext::points)));
 
+    MaterialInfo::updateMaterial();
+
     // Set current program object
-    glUseProgram(program);
+    glUseProgram(PROGRAM);
 
     // Enable hiddden surface removal
     glEnable(GL_DEPTH_TEST);
