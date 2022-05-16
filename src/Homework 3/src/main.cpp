@@ -362,6 +362,24 @@ namespace bunnyContext
     }
 }
 
+namespace LightInfo
+{
+    point4 light_position(0.0, 0.0, -1.0, 0.0);
+    color4 light_ambient(0.2, 0.2, 0.2, 1.0);
+    color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
+    color4 light_specular(1.0, 1.0, 1.0, 1.0);
+
+    color4 material_ambient(1.0, 0.0, 1.0, 1.0);
+    color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
+    color4 material_specular(1.0, 0.8, 0.0, 1.0);
+
+    float material_shininess = 100.0;
+
+    color4 ambient_product = light_ambient * material_ambient;
+    color4 diffuse_product = light_diffuse * material_diffuse;
+    color4 specular_product = light_specular * material_specular;
+}
+
 void loadModel(std::string path, std::vector<point4> *points)
 {
     std::string line;
@@ -493,21 +511,6 @@ void init()
 
     shadingModeLoc = glGetUniformLocation(program, "ShadeMode");
 
-    point4 light_position(0.0, 0.0, -1.0, 0.0);
-    color4 light_ambient(0.2, 0.2, 0.2, 1.0);
-    color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
-    color4 light_specular(1.0, 1.0, 1.0, 1.0);
-
-    color4 material_ambient(1.0, 0.0, 1.0, 1.0);
-    color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
-    color4 material_specular(1.0, 0.8, 0.0, 1.0);
-
-    float material_shininess = 100.0;
-
-    color4 ambient_product = light_ambient * material_ambient;
-    color4 diffuse_product = light_diffuse * material_diffuse;
-    color4 specular_product = light_specular * material_specular;
-
     mat4 projection;
     projection = Perspective(FOV, 1.0, zNear, zFar);
 
@@ -529,17 +532,17 @@ void init()
     glUniform1i(shadingModeLoc, static_cast<int>(cubeContext::shadeMode));
 
     glUniform4fv(glGetUniformLocation(program, "AmbientProduct"),
-                 1, ambient_product);
+                 1, LightInfo::ambient_product);
     glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"),
-                 1, diffuse_product);
+                 1, LightInfo::diffuse_product);
     glUniform4fv(glGetUniformLocation(program, "SpecularProduct"),
-                 1, specular_product);
+                 1, LightInfo::specular_product);
 
     glUniform4fv(glGetUniformLocation(program, "LightPosition"),
-                 1, light_position);
+                 1, LightInfo::light_position);
 
     glUniform1f(glGetUniformLocation(program, "Shininess"),
-                material_shininess);
+                LightInfo::material_shininess);
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(cubeContext::points)));
@@ -559,17 +562,17 @@ void init()
     glUniform1i(shadingModeLoc, static_cast<int>(sphereContext::shadeMode));
 
     glUniform4fv(glGetUniformLocation(program, "AmbientProduct"),
-                 1, ambient_product);
+                 1, LightInfo::ambient_product);
     glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"),
-                 1, diffuse_product);
+                 1, LightInfo::diffuse_product);
     glUniform4fv(glGetUniformLocation(program, "SpecularProduct"),
-                 1, specular_product);
+                 1, LightInfo::specular_product);
 
     glUniform4fv(glGetUniformLocation(program, "LightPosition"),
-                 1, light_position);
+                 1, LightInfo::light_position);
 
     glUniform1f(glGetUniformLocation(program, "Shininess"),
-                material_shininess);
+                LightInfo::material_shininess);
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
