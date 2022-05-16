@@ -372,19 +372,6 @@ namespace bunnyContext
     }
 }
 
-namespace LightInfo
-{
-    // Point light source
-    // point4 light_position(1.0, 1.0, 0.0, 1.0);
-
-    // Directional light source
-    point4 light_position(1.0, 1.0, 0.0, 0.0);
-
-    color4 light_ambient(0.2, 0.2, 0.2, 1.0);
-    color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
-    color4 light_specular(1.0, 1.0, 1.0, 1.0);
-}
-
 namespace MaterialInfo
 {
     color4 material_ambient;
@@ -396,12 +383,6 @@ namespace MaterialInfo
     color4 ambient_product;
     color4 diffuse_product;
     color4 specular_product;
-
-    //     PLASTIC,
-    //     SILVER,
-    //     RUBY,
-    //     EMERALD,
-    //     RUBBER
 
     void updateMaterial()
     {
@@ -440,10 +421,30 @@ namespace MaterialInfo
             material_specular = color4(0.04, 0.7, 0.7, 1.0);
             material_shininess = 10.0;
         }
+    }
+}
 
-        ambient_product = LightInfo::light_ambient * material_ambient;
-        diffuse_product = LightInfo::light_diffuse * material_diffuse;
-        specular_product = LightInfo::light_specular * material_specular;
+namespace LightInfo
+{
+    // Point light source
+    // point4 light_position(1.0, 1.0, 0.0, 1.0);
+
+    // Directional light source
+    point4 light_position(1.0, 1.0, 0.0, 0.0);
+
+    color4 light_ambient(0.2, 0.2, 0.2, 1.0);
+    color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
+    color4 light_specular(1.0, 1.0, 1.0, 1.0);
+
+    bool isAmbientOn = true;
+    bool isDiffuseOn = true;
+    bool isSpecularOn = true;
+
+    void updateLightingComponents()
+    {
+        color4 ambient_product = isAmbientOn ? light_ambient * MaterialInfo::material_ambient : 0.0;
+        color4 diffuse_product = isDiffuseOn ? light_diffuse * MaterialInfo::material_diffuse : 0.0;
+        color4 specular_product = isSpecularOn ? light_specular * MaterialInfo::material_specular : 0.0;
 
         glUniform4fv(glGetUniformLocation(PROGRAM, "AmbientProduct"),
                      1, ambient_product);
@@ -453,10 +454,10 @@ namespace MaterialInfo
                      1, specular_product);
 
         glUniform4fv(glGetUniformLocation(PROGRAM, "LightPosition"),
-                     1, LightInfo::light_position);
+                     1, light_position);
 
         glUniform1f(glGetUniformLocation(PROGRAM, "Shininess"),
-                    material_shininess);
+                    MaterialInfo::material_shininess);
     }
 }
 
@@ -547,26 +548,46 @@ void menu(int num)
     {
         curMaterialType = PLASTIC;
         MaterialInfo::updateMaterial();
+        LightInfo::updateLightingComponents();
     }
     else if (num == 4)
     {
         curMaterialType = SILVER;
         MaterialInfo::updateMaterial();
+        LightInfo::updateLightingComponents();
     }
     else if (num == 5)
     {
         curMaterialType = RUBY;
         MaterialInfo::updateMaterial();
+        LightInfo::updateLightingComponents();
     }
     else if (num == 6)
     {
         curMaterialType = JADE;
         MaterialInfo::updateMaterial();
+        LightInfo::updateLightingComponents();
     }
     else if (num == 7)
     {
         curMaterialType = RUBBER;
         MaterialInfo::updateMaterial();
+        LightInfo::updateLightingComponents();
+    }
+    else if (num == 11)
+    {
+        LightInfo::isAmbientOn = !LightInfo::isAmbientOn;
+        LightInfo::updateLightingComponents();
+    }
+    else if (num == 12)
+    {
+        LightInfo::isDiffuseOn = !LightInfo::isDiffuseOn;
+        LightInfo::updateLightingComponents();
+    }
+    else if (num == 13)
+    {
+        LightInfo::isSpecularOn = !LightInfo::isSpecularOn;
+        LightInfo::updateLightingComponents();
     }
 
     glutPostRedisplay();
@@ -586,15 +607,22 @@ void createMenu(void)
     glutAddMenuEntry("Rubber", 7);
 
     int display_mode_submenu = glutCreateMenu(menu);
-    glutAddMenuEntry("Wireframe", 3);
-    glutAddMenuEntry("Shading", 4);
-    glutAddMenuEntry("Texture", 5);
+    glutAddMenuEntry("Wireframe", 8);
+    glutAddMenuEntry("Shading", 9);
+    glutAddMenuEntry("Texture", 10);
+
+    int light_options_submenu = glutCreateMenu(menu);
+    glutAddMenuEntry("Toggle Ambient", 11);
+    glutAddMenuEntry("Toggle Diffuse", 12);
+    glutAddMenuEntry("Toggle Specular", 13);
 
     int menu_id = glutCreateMenu(menu);
 
     glutAddSubMenu("Shading", shading_mode_submenu);
     glutAddSubMenu("Material", material_type_submenu);
     glutAddSubMenu("Display Mode", display_mode_submenu);
+    glutAddSubMenu("Lighting Options", light_options_submenu);
+
     glutAddMenuEntry("Quit", 0);
 
     glutAttachMenu(GLUT_RIGHT_BUTTON);
@@ -736,6 +764,7 @@ void init()
     glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(wallsContext::points)));
 
     MaterialInfo::updateMaterial();
+    LightInfo::updateLightingComponents();
 
     // Set current program object
     glUseProgram(PROGRAM);
