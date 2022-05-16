@@ -85,6 +85,13 @@ enum DrawColor
     NUM_DRAW_COLORS
 };
 
+enum ShadingMode
+{
+    NONE,
+    GOURAUD,
+    PHONG,
+};
+
 BallShape curBallShape = SPHERE;
 DrawMode curDrawMode = SOLID;
 DrawColor curDrawColor = COLORFUL;
@@ -94,6 +101,8 @@ GLuint vao[NUM_SHAPES + 1];
 
 // Model-view and projection matrices uniform location
 GLuint ModelView, Projection;
+
+GLuint shadingModeLoc;
 
 void loadModel(std::string path, std::vector<point4> *points);
 
@@ -166,6 +175,8 @@ namespace wallsContext
     // A room is implemented as a cube with the front face missing
     // Hence, there will be 36 - 6 = 30 vertices
     const int NumVertices = 30;
+
+    ShadingMode shadeMode = NONE;
 
     point4 points[NumVertices];
     color4 colors[NumVertices];
@@ -246,25 +257,27 @@ namespace sphereContext
     const int NumTriangles = 4096;
     const int NumVertices = 3 * NumTriangles;
 
+    ShadingMode shadeMode = GOURAUD;
+
     point4 points[NumVertices];
-    color4 colors[NumVertices];
+    vec3 normals[NumVertices];
 
     int Index = 0;
 
     void triangle(const point4 &a, const point4 &b, const point4 &c)
     {
+        vec3 normal = normalize(cross(b - a, c - b));
 
         points[Index] = a;
-        colors[Index] = VERTEX_COLORS[Index % 8];
+        normals[Index] = normal;
         Index++;
 
         points[Index] = b;
-        colors[Index] = VERTEX_COLORS[Index % 8];
-
+        normals[Index] = normal;
         Index++;
 
         points[Index] = c;
-        colors[Index] = VERTEX_COLORS[Index % 8];
+        normals[Index] = normal;
         Index++;
     }
 
@@ -465,10 +478,28 @@ void init()
 
     GLuint vPosition = glGetAttribLocation(program, "vPosition");
     GLuint vColor = glGetAttribLocation(program, "vColor");
+    GLuint vNormal = glGetAttribLocation(program, "vNormal");
 
     // Retrieve transformation uniform variable locations
     ModelView = glGetUniformLocation(program, "ModelView");
     Projection = glGetUniformLocation(program, "Projection");
+
+    shadingModeLoc = glGetUniformLocation(program, "ShadeMode");
+
+    point4 light_position(0.0, 0.0, -1.0, 0.0);
+    color4 light_ambient(0.2, 0.2, 0.2, 1.0);
+    color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
+    color4 light_specular(1.0, 1.0, 1.0, 1.0);
+
+    color4 material_ambient(1.0, 0.0, 1.0, 1.0);
+    color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
+    color4 material_specular(1.0, 0.8, 0.0, 1.0);
+
+    float material_shininess = 100.0;
+
+    color4 ambient_product = light_ambient * material_ambient;
+    color4 diffuse_product = light_diffuse * material_diffuse;
+    color4 specular_product = light_specular * material_specular;
 
     mat4 projection;
     projection = Perspective(FOV, 1.0, zNear, zFar);
@@ -495,16 +526,33 @@ void init()
     glBindVertexArray(vao[1]);
 
     glEnableVertexAttribArray(vPosition);
-    glEnableVertexAttribArray(vColor);
+    glEnableVertexAttribArray(vNormal);
 
     glGenBuffers(1, &sphereContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::colors), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::normals) + sizeof(sphereContext::normals), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sphereContext::points), sphereContext::points);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::colors), sphereContext::colors);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::normals), sphereContext::normals);
+
+    glUniform1i(shadingModeLoc, static_cast<int>(sphereContext::shadeMode));
+
+    glUniform4fv(glGetUniformLocation(program, "AmbientProduct"),
+                 1, ambient_product);
+    glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"),
+                 1, diffuse_product);
+    glUniform4fv(glGetUniformLocation(program, "SpecularProduct"),
+                 1, specular_product);
+
+    glUniform4fv(glGetUniformLocation(program, "LightPosition"),
+                 1, light_position);
+
+    glUniform1f(glGetUniformLocation(program, "Shininess"),
+                material_shininess);
+
+    // glShadeModel(GL_FLAT);
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
+    glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
 
     // Initialization for BUNNY
     glBindVertexArray(vao[2]);
@@ -532,6 +580,8 @@ void init()
     glBufferData(GL_ARRAY_BUFFER, sizeof(wallsContext::points) + sizeof(wallsContext::colors), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(wallsContext::points), wallsContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(wallsContext::points), sizeof(wallsContext::colors), wallsContext::colors);
+
+    glUniform1i(shadingModeLoc, static_cast<int>(sphereContext::shadeMode));
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(wallsContext::points)));
@@ -561,6 +611,7 @@ void display(void)
     glBindVertexArray(vao[3]);
     glBindBuffer(GL_ARRAY_BUFFER, wallsContext::buffer);
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
+    glUniform1i(shadingModeLoc, static_cast<int>(wallsContext::shadeMode));
     glDrawArrays(GL_TRIANGLES, 0, wallsContext::NumVertices);
 
     // Use different matrices for objects other than the room
@@ -573,11 +624,13 @@ void display(void)
     case CUBE:
         glBindVertexArray(vao[0]);
         glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
+
         glDrawArrays(GL_TRIANGLES, 0, cubeContext::NumVertices);
         break;
     case SPHERE:
         glBindVertexArray(vao[1]);
         glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
+        glUniform1i(shadingModeLoc, static_cast<int>(sphereContext::shadeMode));
         glDrawArrays(GL_TRIANGLES, 0, sphereContext::NumVertices);
         break;
     case BUNNY:
@@ -727,28 +780,6 @@ void keyboard(unsigned char key, int x, int y)
         curZSpeed = is3D ? INITIAL_Z_SPEED : 0;
 
         setProjectionMatrix();
-    }
-
-    // Toggle between colors
-    if (key == 'C' | key == 'c')
-    {
-        switch (curBallShape)
-        {
-        case SPHERE:
-            toggleColor(sphereContext::colors, sphereContext::NumVertices);
-            glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::colors), sphereContext::colors);
-            break;
-
-        case CUBE:
-            toggleColor(cubeContext::colors, cubeContext::NumVertices);
-            glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeContext::points), sizeof(cubeContext::colors), cubeContext::colors);
-            break;
-
-        case BUNNY:
-            toggleColor(bunnyContext::colors.data(), bunnyContext::NumVertices);
-            glBufferSubData(GL_ARRAY_BUFFER, bunnyContext::points.size() * sizeof(point4), bunnyContext::colors.size() * sizeof(point4), &bunnyContext::colors[0]);
-            break;
-        }
     }
 
     // Print input command overview
