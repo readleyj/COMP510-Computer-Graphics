@@ -15,6 +15,8 @@ const GLfloat INITIAL_HORIZONTAL_SPEED = 0.01;
 const GLfloat INITIAL_VERTICAL_SPEED = -0.015;
 const GLfloat INITIAL_Z_SPEED = -0.01;
 
+const point4 INITIAL_LIGHT_POSITION = (1.0, 1.0, 0.0, 0.0);
+
 const GLfloat SCALE_FACTOR = 0.20;
 const GLfloat BALL_RADIUS = SCALE_FACTOR;
 const GLfloat FOV = 90.0;
@@ -104,11 +106,18 @@ enum MaterialType
     RUBBER
 };
 
+enum LightMovementMode
+{
+    FIXED,
+    MOVE_WITH_OBJECT
+};
+
 BallShape curBallShape = SPHERE;
 DrawMode curDrawMode = SOLID;
 DrawColor curDrawColor = COLORFUL;
 ShadingMode curShadeMode = GOURAUD;
 MaterialType curMaterialType = PLASTIC;
+LightMovementMode curLightMovementMode = FIXED;
 
 // Allocate space for NUM_SHAPES VAOs and 1 more for the room / walls
 GLuint vao[NUM_SHAPES + 1];
@@ -589,6 +598,18 @@ void menu(int num)
         LightInfo::isSpecularOn = !LightInfo::isSpecularOn;
         LightInfo::updateLightingComponents();
     }
+    else if (num == 14)
+    {
+        curLightMovementMode = FIXED;
+
+        LightInfo::light_position = INITIAL_LIGHT_POSITION;
+        LightInfo::updateLightingComponents();
+    }
+    else if (num == 15)
+    {
+
+        curLightMovementMode = MOVE_WITH_OBJECT;
+    }
 
     glutPostRedisplay();
 }
@@ -611,17 +632,22 @@ void createMenu(void)
     glutAddMenuEntry("Shading", 9);
     glutAddMenuEntry("Texture", 10);
 
-    int light_options_submenu = glutCreateMenu(menu);
+    int light_components_submenu = glutCreateMenu(menu);
     glutAddMenuEntry("Toggle Ambient", 11);
     glutAddMenuEntry("Toggle Diffuse", 12);
     glutAddMenuEntry("Toggle Specular", 13);
+
+    int light_position_submenu = glutCreateMenu(menu);
+    glutAddMenuEntry("Fixed", 14);
+    glutAddMenuEntry("Move with Object", 15);
 
     int menu_id = glutCreateMenu(menu);
 
     glutAddSubMenu("Shading", shading_mode_submenu);
     glutAddSubMenu("Material", material_type_submenu);
     glutAddSubMenu("Display Mode", display_mode_submenu);
-    glutAddSubMenu("Lighting Options", light_options_submenu);
+    glutAddSubMenu("Light Components", light_components_submenu);
+    glutAddSubMenu("Light Position", light_position_submenu);
 
     glutAddMenuEntry("Quit", 0);
 
@@ -920,6 +946,12 @@ void idle(void)
     }
 
     displacement += vec3(curHorizontalSpeed, curVerticalSpeed, curZSpeed);
+
+    if (curLightMovementMode == MOVE_WITH_OBJECT)
+    {
+        LightInfo::light_position += vec3(curHorizontalSpeed, curVerticalSpeed, curZSpeed);
+        LightInfo::updateLightingComponents();
+    }
 
     glutPostRedisplay();
 }
