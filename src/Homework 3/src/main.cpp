@@ -113,8 +113,10 @@ namespace cubeContext
 
     const int NumVertices = 36;
 
+    ShadingMode shadeMode = GOURAUD;
+
     point4 points[NumVertices];
-    color4 colors[NumVertices];
+    vec3 normals[NumVertices];
 
     point4 vertices[8] = {
         point4(-1.0, -1.0, 1.0, 1.0),
@@ -131,28 +133,33 @@ namespace cubeContext
 
     void quad(int a, int b, int c, int d)
     {
-        colors[Index] = VERTEX_COLORS[Index % 8];
+        vec4 u = vertices[b] - vertices[a];
+        vec4 v = vertices[c] - vertices[b];
+
+        vec3 normal = normalize(cross(u, v));
+
         points[Index] = vertices[a];
+        normals[Index] = normal;
         Index++;
 
-        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[b];
+        normals[Index] = normal;
         Index++;
 
-        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[c];
+        normals[Index] = normal;
         Index++;
 
-        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[a];
+        normals[Index] = normal;
         Index++;
 
-        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[c];
+        normals[Index] = normal;
         Index++;
 
-        colors[Index] = VERTEX_COLORS[Index % 8];
         points[Index] = vertices[d];
+        normals[Index] = normal;
         Index++;
     }
 
@@ -511,16 +518,31 @@ void init()
     glBindVertexArray(vao[0]);
 
     glEnableVertexAttribArray(vPosition);
-    glEnableVertexAttribArray(vColor);
+    glEnableVertexAttribArray(vNormal);
 
     glGenBuffers(1, &cubeContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeContext::points) + sizeof(cubeContext::colors), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeContext::points) + sizeof(cubeContext::normals) + sizeof(cubeContext::normals), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cubeContext::points), cubeContext::points);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeContext::points), sizeof(cubeContext::colors), cubeContext::colors);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeContext::points), sizeof(cubeContext::normals), cubeContext::normals);
+
+    glUniform1i(shadingModeLoc, static_cast<int>(cubeContext::shadeMode));
+
+    glUniform4fv(glGetUniformLocation(program, "AmbientProduct"),
+                 1, ambient_product);
+    glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"),
+                 1, diffuse_product);
+    glUniform4fv(glGetUniformLocation(program, "SpecularProduct"),
+                 1, specular_product);
+
+    glUniform4fv(glGetUniformLocation(program, "LightPosition"),
+                 1, light_position);
+
+    glUniform1f(glGetUniformLocation(program, "Shininess"),
+                material_shininess);
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(cubeContext::points)));
+    glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(cubeContext::points)));
 
     // Initialization for SPHERE
     glBindVertexArray(vao[1]);
@@ -548,8 +570,6 @@ void init()
 
     glUniform1f(glGetUniformLocation(program, "Shininess"),
                 material_shininess);
-
-    // glShadeModel(GL_FLAT);
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
@@ -624,7 +644,7 @@ void display(void)
     case CUBE:
         glBindVertexArray(vao[0]);
         glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
-
+        glUniform1i(shadingModeLoc, static_cast<int>(cubeContext::shadeMode));
         glDrawArrays(GL_TRIANGLES, 0, cubeContext::NumVertices);
         break;
     case SPHERE:
