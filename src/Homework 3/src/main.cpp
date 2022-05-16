@@ -63,7 +63,6 @@ color4 VERTEX_COLORS[8] = {
 
 enum BallShape
 {
-    CUBE,
     SPHERE,
     BUNNY,
     NUM_SHAPES
@@ -130,72 +129,6 @@ GLuint shadingModeLoc;
 void loadModel(std::string path, std::vector<point4> *points);
 
 // Put object-specific data in namespaces
-namespace cubeContext
-{
-    GLuint buffer;
-
-    const int NumVertices = 36;
-
-    point4 points[NumVertices];
-    vec3 normals[NumVertices];
-
-    point4 vertices[8] = {
-        point4(-1.0, -1.0, 1.0, 1.0),
-        point4(-1.0, 1.0, 1.0, 1.0),
-        point4(1.0, 1.0, 1.0, 1.0),
-        point4(1.0, -1.0, 1.0, 1.0),
-        point4(-1.0, -1.0, -1.0, 1.0),
-        point4(-1.0, 1.0, -1.0, 1.0),
-        point4(1.0, 1.0, -1.0, 1.0),
-        point4(1.0, -1.0, -1.0, 1.0),
-    };
-
-    int Index = 0;
-
-    void quad(int a, int b, int c, int d)
-    {
-        vec4 u = vertices[b] - vertices[a];
-        vec4 v = vertices[c] - vertices[b];
-
-        vec3 normal = normalize(cross(u, v));
-
-        points[Index] = vertices[a];
-        normals[Index] = normal;
-        Index++;
-
-        points[Index] = vertices[b];
-        normals[Index] = normal;
-        Index++;
-
-        points[Index] = vertices[c];
-        normals[Index] = normal;
-        Index++;
-
-        points[Index] = vertices[a];
-        normals[Index] = normal;
-        Index++;
-
-        points[Index] = vertices[c];
-        normals[Index] = normal;
-        Index++;
-
-        points[Index] = vertices[d];
-        normals[Index] = normal;
-        Index++;
-    }
-
-    // generate 12 triangles: 36 vertices and 36 colors
-    void colorcube()
-    {
-        quad(1, 0, 3, 2);
-        quad(2, 3, 7, 6);
-        quad(3, 0, 4, 7);
-        quad(6, 5, 1, 2);
-        quad(4, 5, 6, 7);
-        quad(5, 4, 0, 1);
-    }
-}
-
 namespace wallsContext
 {
     GLuint buffer;
@@ -699,7 +632,6 @@ void toggleColor(point4 colors[], int numVertices)
 // OpenGL initialization
 void init()
 {
-    cubeContext::colorcube();
     sphereContext::tetrahedron(sphereContext::NumTimesToSubdivide);
     bunnyContext::initBunny();
     wallsContext::colorcube();
@@ -723,25 +655,8 @@ void init()
     // Create a vertex array object
     glGenVertexArrays(NUM_SHAPES + 1, vao);
 
-    // Initialization for CUBE
-    glBindVertexArray(vao[0]);
-
-    glEnableVertexAttribArray(vPosition);
-    glEnableVertexAttribArray(vNormal);
-
-    glGenBuffers(1, &cubeContext::buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeContext::points) + sizeof(cubeContext::normals) + sizeof(cubeContext::normals), NULL, GL_STATIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cubeContext::points), cubeContext::points);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeContext::points), sizeof(cubeContext::normals), cubeContext::normals);
-
-    glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
-
-    glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-    glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(cubeContext::points)));
-
     // Initialization for SPHERE
-    glBindVertexArray(vao[1]);
+    glBindVertexArray(vao[0]);
 
     glEnableVertexAttribArray(vPosition);
     glEnableVertexAttribArray(vNormal);
@@ -758,7 +673,7 @@ void init()
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
 
     // Initialization for BUNNY
-    glBindVertexArray(vao[2]);
+    glBindVertexArray(vao[1]);
 
     glEnableVertexAttribArray(vPosition);
     glEnableVertexAttribArray(vColor);
@@ -773,7 +688,7 @@ void init()
     glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(bunnyContext::points.size() * sizeof(point4)));
 
     // Initialization for WALLS / ROOM
-    glBindVertexArray(vao[3]);
+    glBindVertexArray(vao[2]);
 
     glEnableVertexAttribArray(vPosition);
     glEnableVertexAttribArray(vColor);
@@ -814,7 +729,7 @@ void display(void)
     mat4 model_view = Translate(vec3(0.0, 0.0, -2.0)) * Scale(1.0, 1.0, 1.0);
 
     // Draw room
-    glBindVertexArray(vao[3]);
+    glBindVertexArray(vao[2]);
     glBindBuffer(GL_ARRAY_BUFFER, wallsContext::buffer);
     glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
     glUniform1i(shadingModeLoc, static_cast<int>(wallsContext::shadeMode));
@@ -827,20 +742,14 @@ void display(void)
 
     switch (curBallShape)
     {
-    case CUBE:
-        glBindVertexArray(vao[0]);
-        glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
-        glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
-        glDrawArrays(GL_TRIANGLES, 0, cubeContext::NumVertices);
-        break;
     case SPHERE:
-        glBindVertexArray(vao[1]);
+        glBindVertexArray(vao[0]);
         glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
         glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
         glDrawArrays(GL_TRIANGLES, 0, sphereContext::NumVertices);
         break;
     case BUNNY:
-        glBindVertexArray(vao[2]);
+        glBindVertexArray(vao[1]);
         glBindBuffer(GL_ARRAY_BUFFER, bunnyContext::buffer);
 
         // Modify and send new ModelView matrix for Bunny
@@ -1027,19 +936,14 @@ void mouse(int button, int state, int x, int y)
         case GLUT_LEFT_BUTTON:
             curBallShape = BallShape((curBallShape + 1) % NUM_SHAPES);
 
-            if (curBallShape == CUBE)
+            if (curBallShape == SPHERE)
             {
                 glBindVertexArray(vao[0]);
-                glBindBuffer(GL_ARRAY_BUFFER, cubeContext::buffer);
-            }
-            else if (curBallShape == SPHERE)
-            {
-                glBindVertexArray(vao[1]);
                 glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
             }
             else if (curBallShape == BUNNY)
             {
-                glBindVertexArray(vao[2]);
+                glBindVertexArray(vao[1]);
                 glBindBuffer(GL_ARRAY_BUFFER, bunnyContext::buffer);
             }
 
