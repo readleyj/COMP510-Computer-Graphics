@@ -407,9 +407,9 @@ namespace MaterialInfo
     {
         if (curMaterialType == PLASTIC)
         {
-            material_ambient = color4(0.0, 0.1, 0.06, 1.0);
-            material_diffuse = color4(0.0, 0.50980392, 0.50980392, 1.0);
-            material_specular = color4(0.50196078, 0.50196078, 0.50196078, 1.0);
+            material_ambient = color4(0.0, 0.0, 0.0, 1.0);
+            material_diffuse = color4(0.5, 0.5, 0.0, 1.0);
+            material_specular = color4(0.60, 0.60, 0.50, 1.0);
             material_shininess = 32.0;
         }
         else if (curMaterialType == SILVER)
