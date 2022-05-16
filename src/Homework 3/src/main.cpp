@@ -89,7 +89,7 @@ enum ShadingMode
 {
     NONE,
     GOURAUD,
-    PHONG,
+    PHONG
 };
 
 BallShape curBallShape = SPHERE;
