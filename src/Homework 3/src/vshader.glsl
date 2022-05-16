@@ -5,6 +5,9 @@ in vec3 vNormal;
 in vec4 vColor;
 
 out vec4 color;
+out vec3 fN;
+out vec3 fV;
+out vec3 fL;
 
 uniform mat4 ModelView;
 uniform mat4 Projection;
@@ -49,9 +52,26 @@ void main()
         color = ambient + diffuse + specular;
         color.a = 1.0;
     } 
-    else if (ShadeMode == 2) {
+    // Phong
+    else if (ShadeMode == 2)
+    {
+        // Transform vertex position into camera coord.
+        vec3 pos = (ModelView * vPosition).xyz;
 
-    } 
+        // normal direction in camera coordinates
+        fN = (ModelView * vec4(vNormal, 0.0)).xyz;
+
+        // viewer direction in camera coordinates
+        fV = -pos;
+
+        // light direction if directional light source
+        fL = LightPosition.xyz;
+
+        // if point light source
+        if (LightPosition.w != 0.0) {
+            fL = LightPosition.xyz - pos;
+        }
+    }
     // No shading
     else if (ShadeMode == 0) {
         color = vColor;
