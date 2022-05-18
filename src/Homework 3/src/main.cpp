@@ -214,8 +214,8 @@ namespace sphereContext
 
     // Approximate a sphere using recursive subdivision
 
-    const int NumTimesToSubdivide = 5;
-    const int NumTriangles = 4096;
+    const int NumTimesToSubdivide = 7;
+    const int NumTriangles = 65536;
     const int NumVertices = 3 * NumTriangles;
 
     point4 points[NumVertices];
@@ -228,14 +228,17 @@ namespace sphereContext
         vec3 normal = normalize(cross(b - a, c - b));
 
         points[Index] = a;
+        // normals[Index] = vec3(a[0], a[1], a[2]);
         normals[Index] = normal;
         Index++;
 
         points[Index] = b;
+        // normals[Index] = vec3(b[0], b[1], b[2]);
         normals[Index] = normal;
         Index++;
 
         points[Index] = c;
+        // normals[Index] = vec3(c[0], c[1], c[2]);
         normals[Index] = normal;
         Index++;
     }
