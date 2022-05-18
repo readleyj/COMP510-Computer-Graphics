@@ -228,17 +228,14 @@ namespace sphereContext
         vec3 normal = normalize(cross(b - a, c - b));
 
         points[Index] = a;
-        // normals[Index] = vec3(a[0], a[1], a[2]);
         normals[Index] = normal;
         Index++;
 
         points[Index] = b;
-        // normals[Index] = vec3(b[0], b[1], b[2]);
         normals[Index] = normal;
         Index++;
 
         points[Index] = c;
-        // normals[Index] = vec3(c[0], c[1], c[2]);
         normals[Index] = normal;
         Index++;
     }
@@ -858,12 +855,6 @@ void idle(void)
     }
 
     displacement += vec3(curHorizontalSpeed, curVerticalSpeed, curZSpeed);
-
-    if (curLightMovementMode == MOVE_WITH_OBJECT)
-    {
-        LightInfo::light_position += vec3(curHorizontalSpeed, curVerticalSpeed, curZSpeed);
-        LightInfo::updateLightingComponents();
-    }
 
     glutPostRedisplay();
 }
