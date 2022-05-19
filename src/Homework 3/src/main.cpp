@@ -601,7 +601,6 @@ void menu(int num)
     {
         curDisplayMode = WIREFRAME;
 
-        curShadeMode = NONE;
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
     else if (num == 9)
