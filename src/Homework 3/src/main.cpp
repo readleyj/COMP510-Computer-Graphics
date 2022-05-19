@@ -600,15 +600,28 @@ void menu(int num)
     else if (num == 8)
     {
         curDisplayMode = WIREFRAME;
+
+        curShadeMode = NONE;
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
     else if (num == 9)
     {
+        if (curDisplayMode == WIREFRAME)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+
         curDisplayMode = SHADING;
         curShadeMode = GOURAUD;
     }
 
     else if (num == 10)
     {
+        if (curDisplayMode == WIREFRAME)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+
         curDisplayMode = TEXTURE;
         curShadeMode = TEXTURE_SHADE_MODE;
 
