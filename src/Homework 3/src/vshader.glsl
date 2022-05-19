@@ -3,11 +3,13 @@
 in vec4 vPosition;
 in vec3 vNormal;
 in vec4 vColor;
+in vec2 vTexCoord;
 
 out vec4 color;
 out vec3 fN;
 out vec3 fV;
 out vec3 fL;
+out vec2 st;
 
 uniform mat4 ModelView;
 uniform mat4 Projection;
@@ -75,6 +77,8 @@ void main()
     // No shading
     else if (ShadeMode == 0) {
         color = vColor;
+    } else if (ShadeMode == 3) {
+        st = vTexCoord;
     }
 
     gl_Position = Projection * ModelView * vPosition;
