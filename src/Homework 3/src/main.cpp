@@ -8,6 +8,7 @@
 const std::string PRINT_DELIMITER = "------------------------------------------------------";
 
 typedef vec4 color4;
+typedef vec3 color3;
 typedef vec4 point4;
 
 const vec3 TOP_LEFT_FRONT_CORNER = vec3(-0.7, 1.0, -2.0);
@@ -68,13 +69,6 @@ enum BallShape
     NUM_SHAPES
 };
 
-enum DrawMode
-{
-    SOLID,
-    WIREFRAME,
-    NUM_DRAW_MODES
-};
-
 enum DrawColor
 {
     BLACK,
@@ -93,7 +87,8 @@ enum ShadingMode
 {
     NONE,
     GOURAUD,
-    PHONG
+    PHONG,
+    TEXTURE_SHADE_MODE
 };
 
 enum MaterialType
@@ -111,10 +106,17 @@ enum LightMovementMode
     MOVE_WITH_OBJECT
 };
 
+enum DisplayMode
+{
+    SHADING,
+    TEXTURE,
+    WIREFRAME
+};
+
 BallShape curBallShape = SPHERE;
-DrawMode curDrawMode = SOLID;
 DrawColor curDrawColor = COLORFUL;
 ShadingMode curShadeMode = GOURAUD;
+DisplayMode curDisplayMode = SHADING;
 MaterialType curMaterialType = PLASTIC;
 LightMovementMode curLightMovementMode = FIXED;
 
@@ -125,8 +127,10 @@ GLuint vao[NUM_SHAPES + 1];
 GLuint ModelView, Projection;
 
 GLuint shadingModeLoc;
+GLuint texMapLoc;
 
 void loadModel(std::string path, std::vector<point4> *points);
+void loadPPM(std::string path, std::vector<std::vector<color3>> &colors);
 
 // Put object-specific data in namespaces
 namespace wallsContext
@@ -213,13 +217,22 @@ namespace sphereContext
     GLuint buffer;
 
     // Approximate a sphere using recursive subdivision
-
     const int NumTimesToSubdivide = 7;
     const int NumTriangles = 65536;
     const int NumVertices = 3 * NumTriangles;
 
     point4 points[NumVertices];
     vec3 normals[NumVertices];
+
+    vec2 texCoords[NumVertices];
+
+    GLuint sphereTextures[2];
+
+    std::string earthTexPath = "earth.ppm";
+    std::vector<std::vector<color3>> earthTexImg;
+
+    std::string basketballTexPath = "basketball.ppm";
+    std::vector<std::vector<color3>> basketballTexImg;
 
     int Index = 0;
 
@@ -229,14 +242,17 @@ namespace sphereContext
 
         points[Index] = a;
         normals[Index] = normal;
+        texCoords[Index] = vec2(0.5 + atan2(a.x, a.z) / (2 * M_PI), 0.5 + asin(a.y) / M_PI);
         Index++;
 
         points[Index] = b;
         normals[Index] = normal;
+        texCoords[Index] = vec2(0.5 + atan2(b.x, b.z) / (2 * M_PI), 0.5 + asin(b.y) / M_PI);
         Index++;
 
         points[Index] = c;
         normals[Index] = normal;
+        texCoords[Index] = vec2(0.5 + atan2(c.x, c.z) / (2 * M_PI), 0.5 + asin(c.y) / M_PI);
         Index++;
     }
 
@@ -286,6 +302,31 @@ namespace sphereContext
         divide_triangle(v[3], v[2], v[1], count);
         divide_triangle(v[0], v[3], v[1], count);
         divide_triangle(v[0], v[2], v[3], count);
+    }
+
+    void initSphere()
+    {
+        tetrahedron(NumTimesToSubdivide);
+
+        loadPPM(earthTexPath, earthTexImg);
+        loadPPM(basketballTexPath, basketballTexImg);
+
+        glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, earthTexImg.size(), earthTexImg[0].size(), 0,
+                     GL_RGB, GL_UNSIGNED_BYTE, earthTexImg.data());
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glBindTexture(GL_TEXTURE_2D, sphereTextures[1]);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketballTexImg.size(), basketballTexImg[0].size(), 0,
+                     GL_RGB, GL_UNSIGNED_BYTE, basketballTexImg.data());
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
     }
 }
 
@@ -471,6 +512,45 @@ void loadModel(std::string path, std::vector<point4> *points)
     }
 }
 
+void loadPPM(std::string path, std::vector<std::vector<color3>> &colors)
+{
+    std::string line;
+    std::ifstream ppmFile(path);
+
+    if (ppmFile.is_open())
+    {
+        std::string header;
+        std::getline(ppmFile, header);
+
+        if (header.compare("P3") == 0)
+        {
+            std::string comment;
+
+            int height, width, maxValue;
+
+            ppmFile >> height >> width >> maxValue;
+
+            for (int i = 0; i < height; i++)
+            {
+                colors.push_back(std::vector<color3>());
+
+                for (int j = 0; j < width; j++)
+                {
+                    int R, G, B;
+
+                    ppmFile >> R >> G >> B;
+
+                    colors[i].push_back(color3(R, G, B));
+                }
+            }
+        }
+        else
+        {
+            std::cout << "File is not a PPM file" << std::endl;
+        }
+    }
+}
+
 void menu(int num)
 {
     if (num == 0)
@@ -516,29 +596,71 @@ void menu(int num)
         MaterialInfo::updateMaterial();
         LightInfo::updateLightingComponents();
     }
+
+    else if (num == 8)
+    {
+        curDisplayMode = WIREFRAME;
+    }
+    else if (num == 9)
+    {
+        curDisplayMode = SHADING;
+        curShadeMode = GOURAUD;
+    }
+
+    else if (num == 10)
+    {
+        curDisplayMode = TEXTURE;
+        curShadeMode = TEXTURE_SHADE_MODE;
+
+        glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
+        glUniform1i(texMapLoc, 0);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, sphereContext::sphereTextures[0]);
+    }
     else if (num == 11)
+    {
+        curDisplayMode = TEXTURE;
+        curShadeMode = TEXTURE_SHADE_MODE;
+
+        glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
+        glUniform1i(texMapLoc, 1);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, sphereContext::sphereTextures[1]);
+    }
+    else if (num == 12)
+    {
+        curDisplayMode = TEXTURE;
+        curShadeMode = TEXTURE_SHADE_MODE;
+
+        // 1D Texture here
+    }
+
+    else if (num == 13)
     {
         LightInfo::isAmbientOn = !LightInfo::isAmbientOn;
         LightInfo::updateLightingComponents();
     }
-    else if (num == 12)
+    else if (num == 14)
     {
         LightInfo::isDiffuseOn = !LightInfo::isDiffuseOn;
         LightInfo::updateLightingComponents();
     }
-    else if (num == 13)
+    else if (num == 15)
     {
         LightInfo::isSpecularOn = !LightInfo::isSpecularOn;
         LightInfo::updateLightingComponents();
     }
-    else if (num == 14)
+
+    else if (num == 16)
     {
         curLightMovementMode = FIXED;
 
         LightInfo::light_position = INITIAL_LIGHT_POSITION;
         LightInfo::updateLightingComponents();
     }
-    else if (num == 15)
+    else if (num == 17)
     {
 
         curLightMovementMode = MOVE_WITH_OBJECT;
@@ -563,16 +685,18 @@ void createMenu(void)
     int display_mode_submenu = glutCreateMenu(menu);
     glutAddMenuEntry("Wireframe", 8);
     glutAddMenuEntry("Shading", 9);
-    glutAddMenuEntry("Texture", 10);
+    glutAddMenuEntry("Texture (Basketball)", 10);
+    glutAddMenuEntry("Texture (Earth)", 11);
+    glutAddMenuEntry("Texture (1D)", 12);
 
     int light_components_submenu = glutCreateMenu(menu);
-    glutAddMenuEntry("Toggle Ambient", 11);
-    glutAddMenuEntry("Toggle Diffuse", 12);
-    glutAddMenuEntry("Toggle Specular", 13);
+    glutAddMenuEntry("Toggle Ambient", 13);
+    glutAddMenuEntry("Toggle Diffuse", 14);
+    glutAddMenuEntry("Toggle Specular", 15);
 
     int light_position_submenu = glutCreateMenu(menu);
-    glutAddMenuEntry("Fixed", 14);
-    glutAddMenuEntry("Move with Object", 15);
+    glutAddMenuEntry("Fixed", 16);
+    glutAddMenuEntry("Move with Object", 18);
 
     int menu_id = glutCreateMenu(menu);
 
@@ -632,7 +756,7 @@ void toggleColor(point4 colors[], int numVertices)
 // OpenGL initialization
 void init()
 {
-    sphereContext::tetrahedron(sphereContext::NumTimesToSubdivide);
+    sphereContext::initSphere();
     bunnyContext::initBunny();
     wallsContext::colorcube();
 
@@ -642,10 +766,12 @@ void init()
     GLuint vPosition = glGetAttribLocation(PROGRAM, "vPosition");
     GLuint vColor = glGetAttribLocation(PROGRAM, "vColor");
     GLuint vNormal = glGetAttribLocation(PROGRAM, "vNormal");
+    GLuint vTexCoord = glGetAttribLocation(PROGRAM, "vTexCoord");
 
     // Retrieve transformation uniform variable locations
     ModelView = glGetUniformLocation(PROGRAM, "ModelView");
     Projection = glGetUniformLocation(PROGRAM, "Projection");
+    texMapLoc = glGetUniformLocation(PROGRAM, "texMap");
 
     shadingModeLoc = glGetUniformLocation(PROGRAM, "ShadeMode");
 
@@ -658,19 +784,25 @@ void init()
     // Initialization for SPHERE
     glBindVertexArray(vao[0]);
 
+    glGenTextures(2, sphereContext::sphereTextures);
+
     glEnableVertexAttribArray(vPosition);
     glEnableVertexAttribArray(vNormal);
+    glEnableVertexAttribArray(vTexCoord);
 
     glGenBuffers(1, &sphereContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::normals) + sizeof(sphereContext::normals), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::normals) + sizeof(sphereContext::texCoords), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sphereContext::points), sphereContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::normals), sphereContext::normals);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::normals), sizeof(sphereContext::texCoords), sphereContext::texCoords);
 
+    glUniform1i(texMapLoc, 0);
     glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
+    glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points) + sizeof(sphereContext::normals)));
 
     // Initialization for BUNNY
     glBindVertexArray(vao[1]);
@@ -863,21 +995,6 @@ void idle(void)
 
 void keyboard(unsigned char key, int x, int y)
 {
-    // Toggle draw mode (SOLID or WIREFRAME)
-    if (key == 'D' | key == 'd')
-    {
-        curDrawMode = DrawMode((curDrawMode + 1) % NUM_DRAW_MODES);
-
-        if (curDrawMode == SOLID)
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
-        else if (curDrawMode == WIREFRAME)
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        }
-    }
-
     // Reset ball to initial position
     // Reset ball speed
     if (key == 'I' | key == 'i')
