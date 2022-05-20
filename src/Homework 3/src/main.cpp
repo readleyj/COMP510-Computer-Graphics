@@ -310,21 +310,28 @@ namespace sphereContext
         loadPPM(earthTexPath, earthTexImg);
         loadPPM(basketballTexPath, basketballTexImg);
 
+        printf("%d %d\n", basketballTexImg[0].size(), basketballTexImg.size());
+
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketballTexImg.size(), basketballTexImg[0].size(), 0,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketballTexImg[0].size(), basketballTexImg.size(), 0,
                      GL_RGB, GL_UNSIGNED_BYTE, basketballTexImg.data());
-
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glBindTexture(GL_TEXTURE_2D, sphereTextures[1]);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, earthTexImg.size(), earthTexImg[0].size(), 0,
-                     GL_RGB, GL_UNSIGNED_BYTE, earthTexImg.data());
-
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, sphereTextures[1]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, earthTexImg[0].size(), earthTexImg.size(), 0,
+                     GL_RGB, GL_UNSIGNED_BYTE, earthTexImg.data());
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
         glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
     }
 }
@@ -763,12 +770,12 @@ void toggleColor(point4 colors[], int numVertices)
 // OpenGL initialization
 void init()
 {
+    // Load shaders and use the resulting shader program
+    PROGRAM = InitShader("vshader.glsl", "fshader.glsl");
+
     sphereContext::initSphere();
     bunnyContext::initBunny();
     wallsContext::colorcube();
-
-    // Load shaders and use the resulting shader program
-    PROGRAM = InitShader("vshader.glsl", "fshader.glsl");
 
     GLuint vPosition = glGetAttribLocation(PROGRAM, "vPosition");
     GLuint vColor = glGetAttribLocation(PROGRAM, "vColor");
