@@ -303,35 +303,30 @@ namespace sphereContext
         divide_triangle(v[0], v[2], v[3], count);
     }
 
-    void initSphere()
+    void initTextures()
     {
-        tetrahedron(NumTimesToSubdivide);
-
         loadPPM(earthTexPath, earthTexImg);
         loadPPM(basketballTexPath, basketballTexImg);
 
-        glActiveTexture(GL_TEXTURE0);
+        glGenTextures(2, sphereTextures);
+
         glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketballTexImg[0].size(), basketballTexImg.size(), 0,
                      GL_RGB, GL_UNSIGNED_BYTE, basketballTexImg.data());
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, sphereTextures[1]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, earthTexImg[0].size(), earthTexImg.size(), 0,
                      GL_RGB, GL_UNSIGNED_BYTE, earthTexImg.data());
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glGenerateMipmap(GL_TEXTURE_2D);
-
-        glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
     }
+
+    void initSphere()
+    {
+        tetrahedron(NumTimesToSubdivide);
+        initTextures();
+    }
+
 }
 
 namespace bunnyContext
@@ -815,8 +810,6 @@ void init()
 
     // Initialization for SPHERE
     glBindVertexArray(vao[0]);
-
-    glGenTextures(2, sphereContext::sphereTextures);
 
     glEnableVertexAttribArray(vPosition);
     glEnableVertexAttribArray(vNormal);
