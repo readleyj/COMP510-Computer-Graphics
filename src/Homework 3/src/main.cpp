@@ -201,11 +201,11 @@ namespace wallsContext
     {
         update_vertices();
 
-        quad(2, 3, 7, 6);
-        quad(3, 0, 4, 7);
-        quad(6, 5, 1, 2);
-        quad(4, 5, 6, 7);
-        quad(5, 4, 0, 1);
+        quad(6, 7, 3, 2);
+        quad(7, 4, 0, 3);
+        quad(2, 1, 5, 6);
+        quad(7, 6, 5, 4);
+        quad(1, 0, 4, 5);
 
         // Reset Index since colorcube will be called multiple times (to redraw)
         Index = 0;
@@ -878,6 +878,8 @@ void init()
 
     // Enable hiddden surface removal
     glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_CULL_FACE);
 
     // Set state variable "clear color" to clear buffer with.
     glClearColor(1.0, 1.0, 1.0, 1.0);
