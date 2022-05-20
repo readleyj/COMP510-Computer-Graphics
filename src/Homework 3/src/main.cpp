@@ -310,6 +310,12 @@ namespace sphereContext
 
         glGenTextures(2, sphereTextures);
 
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
         glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketballTexImg[0].size(), basketballTexImg.size(), 0,
                      GL_RGB, GL_UNSIGNED_BYTE, basketballTexImg.data());
@@ -549,7 +555,11 @@ void loadPPM(std::string path, std::vector<std::vector<color3>> &colors)
 
                     ppmFile >> R >> G >> B;
 
-                    colors[i].push_back(color3(R, G, B));
+                    float scaled_R = R / float(maxValue);
+                    float scaled_G = G / float(maxValue);
+                    float scaled_B = B / float(maxValue);
+
+                    colors[i].push_back(color3(scaled_R, scaled_G, scaled_B));
                 }
             }
         }
