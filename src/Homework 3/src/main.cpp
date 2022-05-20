@@ -223,7 +223,6 @@ namespace sphereContext
 
     point4 points[NumVertices];
     vec3 normals[NumVertices];
-
     vec2 texCoords[NumVertices];
 
     GLuint sphereTextures[2];
@@ -313,20 +312,20 @@ namespace sphereContext
 
         glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, earthTexImg.size(), earthTexImg[0].size(), 0,
-                     GL_RGB, GL_UNSIGNED_BYTE, earthTexImg.data());
-
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glBindTexture(GL_TEXTURE_2D, sphereTextures[1]);
-
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketballTexImg.size(), basketballTexImg[0].size(), 0,
                      GL_RGB, GL_UNSIGNED_BYTE, basketballTexImg.data());
 
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
+        glBindTexture(GL_TEXTURE_2D, sphereTextures[1]);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, earthTexImg.size(), earthTexImg[0].size(), 0,
+                     GL_RGB, GL_UNSIGNED_BYTE, earthTexImg.data());
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
     }
 }
 
@@ -625,9 +624,7 @@ void menu(int num)
         curShadeMode = TEXTURE_SHADE_MODE;
 
         glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
-        glUniform1i(texMapLoc, 0);
 
-        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, sphereContext::sphereTextures[0]);
     }
     else if (num == 11)
@@ -636,9 +633,7 @@ void menu(int num)
         curShadeMode = TEXTURE_SHADE_MODE;
 
         glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
-        glUniform1i(texMapLoc, 1);
 
-        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, sphereContext::sphereTextures[1]);
     }
     else if (num == 12)
@@ -783,7 +778,7 @@ void init()
     // Retrieve transformation uniform variable locations
     ModelView = glGetUniformLocation(PROGRAM, "ModelView");
     Projection = glGetUniformLocation(PROGRAM, "Projection");
-    texMapLoc = glGetUniformLocation(PROGRAM, "texMap");
+    texMapLoc = glGetUniformLocation(PROGRAM, "texture");
 
     shadingModeLoc = glGetUniformLocation(PROGRAM, "ShadeMode");
 
@@ -808,9 +803,6 @@ void init()
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sphereContext::points), sphereContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::normals), sphereContext::normals);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::normals), sizeof(sphereContext::texCoords), sphereContext::texCoords);
-
-    glUniform1i(texMapLoc, 0);
-    glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
@@ -843,8 +835,6 @@ void init()
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(wallsContext::points), wallsContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(wallsContext::points), sizeof(wallsContext::colors), wallsContext::colors);
 
-    glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
-
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(wallsContext::points)));
 
@@ -853,6 +843,8 @@ void init()
 
     // Set current program object
     glUseProgram(PROGRAM);
+
+    glUniform1i(texMapLoc, 0);
 
     // Enable hiddden surface removal
     glEnable(GL_DEPTH_TEST);
