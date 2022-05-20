@@ -129,7 +129,7 @@ GLuint ModelView, Projection;
 GLuint shadingModeLoc;
 GLuint texMapLoc;
 
-void loadModel(std::string path, std::vector<point4> *points);
+void loadModel(std::string path, std::vector<point4> &points, std::vector<vec3> &normals);
 void loadPPM(std::string path, std::vector<std::vector<color3>> &colors);
 
 // Put object-specific data in namespaces
@@ -341,21 +341,21 @@ namespace bunnyContext
     int NumVertices;
 
     std::vector<point4> points;
-    std::vector<color4> colors;
+    std::vector<vec3> normals;
 
     std::string modelPath = "bunny.off";
 
     void initBunny()
     {
-        loadModel("bunny.off", &points);
+        loadModel("bunny.off", points, normals);
 
         NumVertices = points.size();
-        colors.resize(NumVertices);
+        // colors.resize(NumVertices);
 
-        for (int colorIdx = 0; colorIdx < NumVertices; colorIdx++)
-        {
-            colors[colorIdx] = VERTEX_COLORS[colorIdx % 8];
-        }
+        // for (int colorIdx = 0; colorIdx < NumVertices; colorIdx++)
+        // {
+        //     colors[colorIdx] = VERTEX_COLORS[colorIdx % 8];
+        // }
     }
 }
 
@@ -448,7 +448,7 @@ namespace LightInfo
     }
 }
 
-void loadModel(std::string path, std::vector<point4> *points)
+void loadModel(std::string path, std::vector<point4> &points, std::vector<vec3> &normals)
 {
     std::string line;
     std::ifstream modelFile(path);
@@ -509,9 +509,19 @@ void loadModel(std::string path, std::vector<point4> *points)
         {
             modelFile >> numFaces >> vertIdxX >> vertIdxY >> vertIdxZ;
 
-            points->emplace_back(baseVertices[vertIdxX]);
-            points->emplace_back(baseVertices[vertIdxY]);
-            points->emplace_back(baseVertices[vertIdxZ]);
+            point4 a = baseVertices[vertIdxX];
+            point4 b = baseVertices[vertIdxY];
+            point4 c = baseVertices[vertIdxZ];
+
+            points.emplace_back(a);
+            points.emplace_back(b);
+            points.emplace_back(c);
+
+            vec3 normal = normalize(cross(b - a, c - b));
+
+            normals.emplace_back(normal);
+            normals.emplace_back(normal);
+            normals.emplace_back(normal);
         }
     }
 }
@@ -827,16 +837,21 @@ void init()
     glBindVertexArray(vao[1]);
 
     glEnableVertexAttribArray(vPosition);
-    glEnableVertexAttribArray(vColor);
+    // glEnableVertexAttribArray(vColor);
+    glEnableVertexAttribArray(vNormal);
 
     glGenBuffers(1, &bunnyContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, bunnyContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, bunnyContext::points.size() * sizeof(point4) + bunnyContext::colors.size() * sizeof(point4), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, bunnyContext::points.size() * sizeof(point4) + bunnyContext::normals.size() * sizeof(vec3), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, bunnyContext::points.size() * sizeof(point4), &bunnyContext::points[0]);
-    glBufferSubData(GL_ARRAY_BUFFER, bunnyContext::points.size() * sizeof(point4), bunnyContext::colors.size() * sizeof(point4), &bunnyContext::colors[0]);
+    glBufferSubData(GL_ARRAY_BUFFER, bunnyContext::points.size() * sizeof(point4), bunnyContext::normals.size() * sizeof(vec3), &bunnyContext::normals[0]);
+    // glBufferData(GL_ARRAY_BUFFER, bunnyContext::points.size() * sizeof(point4) + bunnyContext::colors.size() * sizeof(point4), NULL, GL_STATIC_DRAW);
+    // glBufferSubData(GL_ARRAY_BUFFER, 0, bunnyContext::points.size() * sizeof(point4), &bunnyContext::points[0]);
+    // glBufferSubData(GL_ARRAY_BUFFER, bunnyContext::points.size() * sizeof(point4), bunnyContext::colors.size() * sizeof(point4), &bunnyContext::colors[0]);
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(bunnyContext::points.size() * sizeof(point4)));
+    glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(bunnyContext::points.size() * sizeof(point4)));
+    // glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(bunnyContext::points.size() * sizeof(point4)));
 
     // Initialization for WALLS / ROOM
     glBindVertexArray(vao[2]);
@@ -909,6 +924,7 @@ void display(void)
         model_view = model_view * RotateX(BUNNY_X_ROTATION_ANGLE);
         glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
 
+        glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
         glDrawArrays(GL_TRIANGLES, 0, bunnyContext::NumVertices);
         break;
     }
