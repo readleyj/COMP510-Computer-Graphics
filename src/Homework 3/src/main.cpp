@@ -310,8 +310,6 @@ namespace sphereContext
         loadPPM(earthTexPath, earthTexImg);
         loadPPM(basketballTexPath, basketballTexImg);
 
-        printf("%d %d\n", basketballTexImg[0].size(), basketballTexImg.size());
-
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketballTexImg[0].size(), basketballTexImg.size(), 0,
@@ -636,6 +634,11 @@ void menu(int num)
     }
     else if (num == 11)
     {
+        if (curDisplayMode == WIREFRAME)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+
         curDisplayMode = TEXTURE;
         curShadeMode = TEXTURE_SHADE_MODE;
 
@@ -645,6 +648,11 @@ void menu(int num)
     }
     else if (num == 12)
     {
+        if (curDisplayMode == WIREFRAME)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+
         curDisplayMode = TEXTURE;
         curShadeMode = TEXTURE_SHADE_MODE;
 
@@ -785,7 +793,7 @@ void init()
     // Retrieve transformation uniform variable locations
     ModelView = glGetUniformLocation(PROGRAM, "ModelView");
     Projection = glGetUniformLocation(PROGRAM, "Projection");
-    texMapLoc = glGetUniformLocation(PROGRAM, "texture");
+    texMapLoc = glGetUniformLocation(PROGRAM, "texMap");
 
     shadingModeLoc = glGetUniformLocation(PROGRAM, "ShadeMode");
 

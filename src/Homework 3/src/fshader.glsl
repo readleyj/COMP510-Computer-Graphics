@@ -6,7 +6,7 @@ in vec3 fL;
 in vec3 fV;
 
 in vec2 texCoord;
-uniform sampler2D texture;
+uniform sampler2D texMap;
 
 in vec4 color;
 
@@ -48,6 +48,6 @@ void main()
      {
           fragColor = color;
      } else if (ShadeMode == 3) {
-          fragColor = color * texture2D(texture, texCoord);
+          fragColor = texture(texMap, texCoord);
      }
-}
+}    
