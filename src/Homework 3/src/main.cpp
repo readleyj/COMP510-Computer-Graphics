@@ -130,7 +130,7 @@ GLuint shadingModeLoc;
 GLuint texMapLoc;
 
 void loadModel(std::string path, std::vector<point4> &points, std::vector<vec3> &normals);
-void loadPPM(std::string path, std::vector<std::vector<color3>> &colors);
+void loadPPM(std::string path, std::vector<GLubyte> &image, int &texHeight, int &texWidth);
 
 // Put object-specific data in namespaces
 namespace wallsContext
@@ -228,10 +228,12 @@ namespace sphereContext
     GLuint sphereTextures[2];
 
     std::string earthTexPath = "earth.ppm";
-    std::vector<std::vector<color3>> earthTexImg;
+    int earthTexHeight, earthTexWidth;
+    std::vector<GLubyte> earthTexImg;
 
     std::string basketballTexPath = "basketball.ppm";
-    std::vector<std::vector<color3>> basketballTexImg;
+    int basketballTexHeight, basketballTexWidth;
+    std::vector<GLubyte> basketballTexImg;
 
     int Index = 0;
 
@@ -239,19 +241,35 @@ namespace sphereContext
     {
         vec3 normal = normalize(cross(b - a, c - b));
 
+        float u;
+        float v;
+
         points[Index] = a;
         normals[Index] = normal;
-        texCoords[Index] = vec2(0.5 + atan2(a.x, a.z) / (2 * M_PI), 0.5 + asin(a.y) / M_PI);
+
+        u = 0.5 + atan2(a.z, a.x) / (2 * M_PI);
+        v = 0.5 - asin(a.y) / M_PI;
+
+        texCoords[Index] = vec2(u, v);
         Index++;
 
         points[Index] = b;
         normals[Index] = normal;
-        texCoords[Index] = vec2(0.5 + atan2(b.x, b.z) / (2 * M_PI), 0.5 + asin(b.y) / M_PI);
+
+        u = 0.5 + atan2(b.z, b.x) / (2 * M_PI);
+        v = 0.5 - asin(b.y) / M_PI;
+
+        texCoords[Index] = vec2(u, v);
         Index++;
 
         points[Index] = c;
         normals[Index] = normal;
-        texCoords[Index] = vec2(0.5 + atan2(c.x, c.z) / (2 * M_PI), 0.5 + asin(c.y) / M_PI);
+
+        u = 0.5 + atan2(c.z, c.x) / (2 * M_PI);
+        v = 0.5 - asin(c.y) / M_PI;
+
+        texCoords[Index] = vec2(u, v);
+
         Index++;
     }
 
@@ -305,8 +323,8 @@ namespace sphereContext
 
     void initTextures()
     {
-        loadPPM(earthTexPath, earthTexImg);
-        loadPPM(basketballTexPath, basketballTexImg);
+        loadPPM(earthTexPath, earthTexImg, earthTexHeight, earthTexWidth);
+        loadPPM(basketballTexPath, basketballTexImg, basketballTexHeight, basketballTexWidth);
 
         glGenTextures(2, sphereTextures);
 
@@ -317,12 +335,12 @@ namespace sphereContext
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
         glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketballTexImg[0].size(), basketballTexImg.size(), 0,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketballTexWidth, basketballTexHeight, 0,
                      GL_RGB, GL_UNSIGNED_BYTE, basketballTexImg.data());
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, sphereTextures[1]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, earthTexImg[0].size(), earthTexImg.size(), 0,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, earthTexWidth, earthTexHeight, 0,
                      GL_RGB, GL_UNSIGNED_BYTE, earthTexImg.data());
         glGenerateMipmap(GL_TEXTURE_2D);
     }
@@ -527,7 +545,7 @@ void loadModel(std::string path, std::vector<point4> &points, std::vector<vec3> 
     }
 }
 
-void loadPPM(std::string path, std::vector<std::vector<color3>> &colors)
+void loadPPM(std::string path, std::vector<GLubyte> &image, int &texHeight, int &texWidth)
 {
     std::string line;
     std::ifstream ppmFile(path);
@@ -545,22 +563,22 @@ void loadPPM(std::string path, std::vector<std::vector<color3>> &colors)
 
             ppmFile >> height >> width >> maxValue;
 
-            for (int i = 0; i < height; i++)
+            texHeight = height;
+            texWidth = width;
+
+            int numPixels = height * width;
+
+            image.resize(3 * numPixels);
+
+            for (int idx = numPixels; idx > 0; idx--)
             {
-                colors.push_back(std::vector<color3>());
+                int R, G, B;
 
-                for (int j = 0; j < width; j++)
-                {
-                    int R, G, B;
+                ppmFile >> R >> G >> B;
 
-                    ppmFile >> R >> G >> B;
-
-                    float scaled_R = R / float(maxValue);
-                    float scaled_G = G / float(maxValue);
-                    float scaled_B = B / float(maxValue);
-
-                    colors[i].push_back(color3(scaled_R, scaled_G, scaled_B));
-                }
+                image[3 * numPixels - 3 * idx] = R;
+                image[3 * numPixels - 3 * idx + 1] = G;
+                image[3 * numPixels - 3 * idx + 2] = B;
             }
         }
         else

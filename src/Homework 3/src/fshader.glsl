@@ -48,6 +48,6 @@ void main()
      {
           fragColor = color;
      } else if (ShadeMode == 3) {
-          fragColor = texture(texMap, texCoord);
+          fragColor = texture2D(texMap, texCoord);
      }
 }    
