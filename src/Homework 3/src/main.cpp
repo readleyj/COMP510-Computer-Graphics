@@ -129,6 +129,8 @@ GLuint ModelView, Projection;
 GLuint shadingModeLoc;
 GLuint texMapLoc;
 
+mat4 model_view;
+
 void loadModel(std::string path, std::vector<point4> &points, std::vector<vec3> &normals);
 void loadPPM(std::string path, std::vector<GLubyte> &image, int &texHeight, int &texWidth);
 
@@ -719,6 +721,9 @@ void menu(int num)
     {
 
         curLightMovementMode = MOVE_WITH_OBJECT;
+
+        LightInfo::light_direction = model_view * LightInfo::light_direction;
+        LightInfo::updateLightingComponents();
     }
 
     glutPostRedisplay();
@@ -751,7 +756,7 @@ void createMenu(void)
 
     int light_position_submenu = glutCreateMenu(menu);
     glutAddMenuEntry("Fixed", 16);
-    glutAddMenuEntry("Move with Object", 18);
+    glutAddMenuEntry("Move with Object", 17);
 
     int menu_id = glutCreateMenu(menu);
 
@@ -915,7 +920,7 @@ void display(void)
     // Render the walls first, then the objects
     // Translate back a bit so that scene is visible
     // Scaling should only apply to objects (so (1.0, 1.0, 1.0) is used for the scale matrix)
-    mat4 model_view = Translate(vec3(0.0, 0.0, -2.0)) * Scale(1.0, 1.0, 1.0);
+    model_view = Translate(vec3(0.0, 0.0, -2.0)) * Scale(1.0, 1.0, 1.0);
 
     // Draw room
     glBindVertexArray(vao[2]);
