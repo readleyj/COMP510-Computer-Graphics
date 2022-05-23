@@ -16,7 +16,7 @@ const GLfloat INITIAL_HORIZONTAL_SPEED = 0.01;
 const GLfloat INITIAL_VERTICAL_SPEED = -0.015;
 const GLfloat INITIAL_Z_SPEED = -0.01;
 
-const point4 INITIAL_LIGHT_POSITION = (1.0, 1.0, 0.0, 0.0);
+const point4 INITIAL_LIGHT_DIRECTION = vec4(1.0, 1.0, 0.0, 0.0);
 
 const GLfloat SCALE_FACTOR = 0.20;
 const GLfloat BALL_RADIUS = SCALE_FACTOR;
@@ -436,7 +436,7 @@ namespace LightInfo
     // point4 light_position(1.0, 1.0, 0.0, 1.0);
 
     // Directional light source
-    point4 light_position(1.0, 1.0, 0.0, 0.0);
+    point4 light_direction = INITIAL_LIGHT_DIRECTION;
 
     color4 light_ambient(0.2, 0.2, 0.2, 1.0);
     color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
@@ -460,7 +460,7 @@ namespace LightInfo
                      1, specular_product);
 
         glUniform4fv(glGetUniformLocation(PROGRAM, "LightPosition"),
-                     1, light_position);
+                     1, light_direction);
 
         glUniform1f(glGetUniformLocation(PROGRAM, "Shininess"),
                     MaterialInfo::material_shininess);
@@ -712,7 +712,7 @@ void menu(int num)
     {
         curLightMovementMode = FIXED;
 
-        LightInfo::light_position = INITIAL_LIGHT_POSITION;
+        LightInfo::light_direction = INITIAL_LIGHT_DIRECTION;
         LightInfo::updateLightingComponents();
     }
     else if (num == 17)
