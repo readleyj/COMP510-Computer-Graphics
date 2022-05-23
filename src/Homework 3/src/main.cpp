@@ -24,6 +24,8 @@ const GLfloat FOV = 90.0;
 const GLfloat zNear = 0.5;
 const GLfloat zFar = 5.0;
 
+const vec3 TEXTURE_1D_PLANE = vec3(1.0, 1.0, 1.0);
+
 // Angle by which Bunny should be rotated in X-direction
 // Need to do this so Bunny faces the camera
 const GLfloat BUNNY_X_ROTATION_ANGLE = -90.0;
@@ -88,7 +90,8 @@ enum ShadingMode
     NONE,
     GOURAUD,
     PHONG,
-    TEXTURE_SHADE_MODE
+    TEXTURE_2D,
+    TEXTURE_1D
 };
 
 enum MaterialType
@@ -127,7 +130,8 @@ GLuint vao[NUM_SHAPES + 1];
 GLuint ModelView, Projection;
 
 GLuint shadingModeLoc;
-GLuint texMapLoc;
+GLuint texMap2DLoc;
+GLuint texMap1DLoc;
 
 mat4 model_view;
 
@@ -226,8 +230,9 @@ namespace sphereContext
     point4 points[NumVertices];
     vec3 normals[NumVertices];
     vec2 texCoords[NumVertices];
+    float texCoords1D[NumVertices];
 
-    GLuint sphereTextures[2];
+    GLuint sphereTextures[3];
 
     std::string earthTexPath = "earth.ppm";
     int earthTexHeight, earthTexWidth;
@@ -237,7 +242,24 @@ namespace sphereContext
     int basketballTexHeight, basketballTexWidth;
     std::vector<GLubyte> basketballTexImg;
 
+    const int stripeImageWidth = 1024;
+    const int stripeWidth = 64;
+
+    GLubyte stripeImage[3 * stripeImageWidth];
+
     int Index = 0;
+
+    void loadStripeImage()
+    {
+        int j;
+
+        for (j = 0; j < stripeImageWidth; j++)
+        {
+            stripeImage[3 * j] = (j <= stripeWidth) ? 255 : 0;
+            stripeImage[3 * j + 1] = (j > stripeWidth) ? 255 : 0;
+            stripeImage[3 * j + 2] = 0;
+        }
+    }
 
     void triangle(const point4 &a, const point4 &b, const point4 &c)
     {
@@ -253,6 +275,8 @@ namespace sphereContext
         v = 0.5 - asin(a.y) / M_PI;
 
         texCoords[Index] = vec2(u, v);
+        texCoords1D[Index] = length(TEXTURE_1D_PLANE - vec3(a.x, a.y, a.z));
+
         Index++;
 
         points[Index] = b;
@@ -262,6 +286,8 @@ namespace sphereContext
         v = 0.5 - asin(b.y) / M_PI;
 
         texCoords[Index] = vec2(u, v);
+        texCoords1D[Index] = length(TEXTURE_1D_PLANE - vec3(b.x, b.y, b.z));
+
         Index++;
 
         points[Index] = c;
@@ -271,6 +297,7 @@ namespace sphereContext
         v = 0.5 - asin(c.y) / M_PI;
 
         texCoords[Index] = vec2(u, v);
+        texCoords1D[Index] = length(TEXTURE_1D_PLANE - vec3(c.x, c.y, c.z));
 
         Index++;
     }
@@ -327,30 +354,52 @@ namespace sphereContext
     {
         loadPPM(earthTexPath, earthTexImg, earthTexHeight, earthTexWidth);
         loadPPM(basketballTexPath, basketballTexImg, basketballTexHeight, basketballTexWidth);
+        loadStripeImage();
 
-        glGenTextures(2, sphereTextures);
+        glGenTextures(3, sphereTextures);
 
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-        glBindTexture(GL_TEXTURE_2D, sphereTextures[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, basketballTexWidth, basketballTexHeight, 0,
                      GL_RGB, GL_UNSIGNED_BYTE, basketballTexImg.data());
         glGenerateMipmap(GL_TEXTURE_2D);
 
+        glUniform1i(texMap2DLoc, 0);
+
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, sphereTextures[1]);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, earthTexWidth, earthTexHeight, 0,
                      GL_RGB, GL_UNSIGNED_BYTE, earthTexImg.data());
         glGenerateMipmap(GL_TEXTURE_2D);
+        glUniform1i(texMap2DLoc, 0);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_1D, sphereTextures[2]);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, stripeImageWidth, 0,
+                     GL_RGB, GL_UNSIGNED_BYTE, stripeImage);
+
+        glUniform1i(texMap1DLoc, 1);
     }
 
     void initSphere()
     {
+
         tetrahedron(NumTimesToSubdivide);
-        initTextures();
     }
 
 }
@@ -661,10 +710,10 @@ void menu(int num)
         }
 
         curDisplayMode = TEXTURE;
-        curShadeMode = TEXTURE_SHADE_MODE;
+        curShadeMode = TEXTURE_2D;
 
         glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
-
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, sphereContext::sphereTextures[0]);
     }
     else if (num == 11)
@@ -675,10 +724,10 @@ void menu(int num)
         }
 
         curDisplayMode = TEXTURE;
-        curShadeMode = TEXTURE_SHADE_MODE;
+        curShadeMode = TEXTURE_2D;
 
         glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
-
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, sphereContext::sphereTextures[1]);
     }
     else if (num == 12)
@@ -689,9 +738,11 @@ void menu(int num)
         }
 
         curDisplayMode = TEXTURE;
-        curShadeMode = TEXTURE_SHADE_MODE;
+        curShadeMode = TEXTURE_1D;
 
-        // 1D Texture here
+        glUniform1i(shadingModeLoc, static_cast<int>(curShadeMode));
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_1D, sphereContext::sphereTextures[2]);
     }
 
     else if (num == 13)
@@ -826,12 +877,16 @@ void init()
     GLuint vPosition = glGetAttribLocation(PROGRAM, "vPosition");
     GLuint vColor = glGetAttribLocation(PROGRAM, "vColor");
     GLuint vNormal = glGetAttribLocation(PROGRAM, "vNormal");
-    GLuint vTexCoord = glGetAttribLocation(PROGRAM, "vTexCoord");
+    GLuint vTexCoord2D = glGetAttribLocation(PROGRAM, "vTexCoord2D");
+    GLuint vTexCoord1D = glGetAttribLocation(PROGRAM, "vTexCoord1D");
 
     // Retrieve transformation uniform variable locations
     ModelView = glGetUniformLocation(PROGRAM, "ModelView");
     Projection = glGetUniformLocation(PROGRAM, "Projection");
-    texMapLoc = glGetUniformLocation(PROGRAM, "texMap");
+    texMap2DLoc = glGetUniformLocation(PROGRAM, "texMap2D");
+    texMap1DLoc = glGetUniformLocation(PROGRAM, "texMap1D");
+
+    sphereContext::initTextures();
 
     shadingModeLoc = glGetUniformLocation(PROGRAM, "ShadeMode");
 
@@ -846,18 +901,21 @@ void init()
 
     glEnableVertexAttribArray(vPosition);
     glEnableVertexAttribArray(vNormal);
-    glEnableVertexAttribArray(vTexCoord);
+    glEnableVertexAttribArray(vTexCoord2D);
+    glEnableVertexAttribArray(vTexCoord1D);
 
     glGenBuffers(1, &sphereContext::buffer);
     glBindBuffer(GL_ARRAY_BUFFER, sphereContext::buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::normals) + sizeof(sphereContext::texCoords), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::normals) + sizeof(sphereContext::texCoords) + sizeof(sphereContext::texCoords1D), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sphereContext::points), sphereContext::points);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points), sizeof(sphereContext::normals), sphereContext::normals);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::normals), sizeof(sphereContext::texCoords), sphereContext::texCoords);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(sphereContext::points) + sizeof(sphereContext::normals) + sizeof(sphereContext::texCoords), sizeof(sphereContext::texCoords1D), sphereContext::texCoords1D);
 
     glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
     glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points)));
-    glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points) + sizeof(sphereContext::normals)));
+    glVertexAttribPointer(vTexCoord2D, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points) + sizeof(sphereContext::normals)));
+    glVertexAttribPointer(vTexCoord1D, 1, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(sphereContext::points) + sizeof(sphereContext::normals) + sizeof(sphereContext::texCoords)));
 
     // Initialization for BUNNY
     glBindVertexArray(vao[1]);
@@ -900,11 +958,8 @@ void init()
     // Set current program object
     glUseProgram(PROGRAM);
 
-    glUniform1i(texMapLoc, 0);
-
     // Enable hiddden surface removal
     glEnable(GL_DEPTH_TEST);
-
     glEnable(GL_CULL_FACE);
 
     // Set state variable "clear color" to clear buffer with.

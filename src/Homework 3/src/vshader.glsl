@@ -3,13 +3,15 @@
 in vec4 vPosition;
 in vec3 vNormal;
 in vec4 vColor;
-in vec2 vTexCoord;
+in vec2 vTexCoord2D;
+in float vTexCoord1D;
 
 out vec4 color;
 out vec3 fN;
 out vec3 fV;
 out vec3 fL;
-out vec2 texCoord;
+out vec2 texCoord2D;
+out float texCoord1D;
 
 uniform mat4 ModelView;
 uniform mat4 Projection;
@@ -78,7 +80,9 @@ void main()
     else if (ShadeMode == 0) {
         color = vColor;
     } else if (ShadeMode == 3) {
-        texCoord = vTexCoord;
+        texCoord2D = vTexCoord2D;
+    } else if (ShadeMode == 4) {
+        texCoord1D = vTexCoord1D;
     }
 
     gl_Position = Projection * ModelView * vPosition;

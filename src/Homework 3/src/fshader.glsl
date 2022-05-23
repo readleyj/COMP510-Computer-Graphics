@@ -5,8 +5,11 @@ in vec3 fN;
 in vec3 fL;
 in vec3 fV;
 
-in vec2 texCoord;
-uniform sampler2D texMap;
+in vec2 texCoord2D;
+in float texCoord1D;
+
+uniform sampler2D texMap2D;
+uniform sampler1D texMap1D;
 
 in vec4 color;
 
@@ -48,6 +51,8 @@ void main()
      {
           fragColor = color;
      } else if (ShadeMode == 3) {
-          fragColor = texture2D(texMap, texCoord);
+          fragColor = texture2D(texMap2D, texCoord2D);
+     } else if (ShadeMode == 4) {
+          fragColor = texture1D(texMap1D, texCoord1D);
      }
 }    
